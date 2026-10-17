@@ -21,7 +21,7 @@ namespace Caudal
             return rect;
         }
 
-        public static void Label(Transform parent, string value, int size, Color color,
+        public static Text Label(Transform parent, string value, int size, Color color,
             Vector2 min, Vector2 max)
         {
             var go = new GameObject(value, typeof(RectTransform), typeof(Text));
@@ -40,20 +40,60 @@ namespace Caudal
             text.resizeTextMinSize = 10;
             text.resizeTextMaxSize = size;
             text.raycastTarget = false;
+            return text;
         }
 
-        public static void Build(Transform parent, string playerOneName, string playerTwoName)
+        public static void Build(Transform parent, GameManager game, Texture workerOffice, Texture bossOffice, Texture worker, Texture boss)
         {
-            var left = Panel(parent, "Panel izquierdo", new Color(0.08f, 0.22f, 0.25f),
-                Vector2.zero, new Vector2(0.5f, 1));
-            var right = Panel(parent, "Panel derecho", new Color(0.25f, 0.17f, 0.18f),
-                new Vector2(0.5f, 0), Vector2.one);
-            Label(left, playerOneName, 52, Color.white,
-                new Vector2(0.08f, 0.4f), new Vector2(0.92f, 0.6f));
-            Label(right, playerTwoName, 52, Color.white,
-                new Vector2(0.08f, 0.4f), new Vector2(0.92f, 0.6f));
-            Panel(parent, "Division", new Color(0.85f, 0.84f, 0.76f),
-                new Vector2(0.499f, 0), new Vector2(0.501f, 1));
+            var left = Panel(parent, "Trabajador", new Color(.06f, .13f, .16f), new Vector2(0, .29f), new Vector2(.5f, .88f));
+            var right = Panel(parent, "Jefe", new Color(.16f, .12f, .12f), new Vector2(.5f, .29f), new Vector2(1, .88f));
+            Picture(left, workerOffice, new Vector2(0, .35f), new Vector2(.45f, .9f));
+            Picture(left, worker, new Vector2(.45f, .35f), new Vector2(1, .9f));
+            Picture(right, bossOffice, new Vector2(0, .35f), new Vector2(.45f, .9f));
+            Picture(right, boss, new Vector2(.45f, .35f), new Vector2(1, .9f));
+            Label(left, "TRABAJADOR", 26, Color.white, new Vector2(0, .9f), Vector2.one);
+            Label(right, "JEFE", 26, Color.white, new Vector2(0, .9f), Vector2.one);
+            var workerText = Label(left, "", 22, Color.white, new Vector2(.03f, .02f), new Vector2(.97f, .36f));
+            var bossText = Label(right, "", 20, Color.white, new Vector2(.03f, .02f), new Vector2(.97f, .36f));
+            left.gameObject.AddComponent<TrabajadorHUD>().Initialize(game, workerText);
+            right.gameObject.AddComponent<JefeHUD>().Initialize(game, bossText);
+            var shared = Label(parent, "", 23, Color.white, new Vector2(.02f, .89f), new Vector2(.98f, .99f));
+            shared.gameObject.AddComponent<SharedHUD>().Initialize(game, shared);
+            var graph = Panel(parent, "Plano cartesiano", new Color(.1f, .16f, .2f), new Vector2(.02f, .04f), new Vector2(.25f, .26f));
+            Panel(graph, "X", Color.gray, new Vector2(0, .495f), new Vector2(1, .505f));
+            Panel(graph, "Y", Color.gray, new Vector2(.495f, 0), new Vector2(.505f, 1));
+            Label(graph, "Productividad ↑", 14, Color.white, new Vector2(0, .8f), new Vector2(.9f, 1));
+            Label(graph, "Felicidad →", 14, Color.white, Vector2.zero, new Vector2(.9f, .2f));
+            var marker = Panel(graph, "Estado de oficina", new Color(.3f, 1, .7f), Vector2.zero, Vector2.zero);
+            marker.sizeDelta = new Vector2(12, 12);
+            var stats = Label(parent, "", 21, Color.white, new Vector2(.28f, .04f), new Vector2(.98f, .26f));
+            graph.gameObject.AddComponent<StatsGraphUI>().Initialize(game, marker, stats);
+            var result = Panel(parent, "Resultados", new Color(.025f, .05f, .07f, .98f), new Vector2(.08f, .12f), new Vector2(.92f, .88f));
+            var resultText = Label(result, "", 30, Color.white, new Vector2(.05f, .05f), new Vector2(.95f, .95f));
+            parent.gameObject.AddComponent<ResultsUI>().Initialize(game, result.gameObject, resultText);
+            result.gameObject.SetActive(false);
+        }
+        static void Picture(Transform parent, Texture texture, Vector2 min, Vector2 max)
+        {
+            if (texture == null)
+                return;
+            var wrapper = new GameObject("Marco " + texture.name, typeof(RectTransform));
+            var frame = wrapper.GetComponent<RectTransform>();
+            frame.SetParent(parent, false);
+            frame.anchorMin = min;
+            frame.anchorMax = max;
+            frame.offsetMin = frame.offsetMax = Vector2.zero;
+
+            var go = new GameObject(texture.name, typeof(RectTransform), typeof(RawImage));
+            go.transform.SetParent(frame, false);
+            var picture = go.GetComponent<RawImage>();
+            picture.texture = texture;
+            picture.raycastTarget = false;
+
+            // Encajar sin estirar ni recortar el PNG.
+            var aspect = go.AddComponent<AspectRatioFitter>();
+            aspect.aspectRatio = (float)texture.width / texture.height;
+            aspect.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
         }
     }
 }

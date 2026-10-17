@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 259cff37689a49bea2fd0c111423d75a, type: 3}
+  m_Name: reunion
+  m_EditorClassIdentifier: 
+  taskId: reunion
+  taskName: Preparar reunión
+  description: Reúne los materiales del equipo.
+  difficulty: 1
+  happinessCost: 5
+  productivityReward: 6
+  quotaReward: 18
+  assignmentTimeLimit: 10
+  executionTimeLimit: 20
+  requiresRefusalMinigame: 0

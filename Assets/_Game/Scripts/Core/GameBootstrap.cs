@@ -7,10 +7,17 @@ namespace Caudal
     public sealed class GameBootstrap : MonoBehaviour
     {
         [SerializeField] private string teamName = "Caudal";
-        [SerializeField] private string playerOneName = "Jefe";
-        [SerializeField] private string playerTwoName = "Trabajador";
+        [SerializeField] private string playerOneName = "";
+        [SerializeField] private string playerTwoName = "";
         [SerializeField, Min(0)] private float introDuration = 2f;
         [SerializeField, Min(0.01f)] private float fadeDuration = 0.5f;
+
+        [SerializeField] private Texture workerOffice, bossOffice, workerPortrait, bossPortrait;
+        [SerializeField] private GameManager gameManager;
+        [SerializeField] private StatsManager statsManager;
+        [SerializeField] private DayManager dayManager;
+        [SerializeField] private TaskManager taskManager;
+        [SerializeField] private InputRouter inputRouter;
 
         private IEnumerator Start()
         {
@@ -31,7 +38,9 @@ namespace Caudal
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1280, 720);
             scaler.matchWidthOrHeight = 0.5f;
-            GameScreen.Build(canvasObject.transform, playerOneName, playerTwoName);
+            gameManager.Initialize(statsManager, dayManager, taskManager, inputRouter);
+            statsManager.ResetStats();
+            GameScreen.Build(canvasObject.transform, gameManager, workerOffice, bossOffice, workerPortrait, bossPortrait);
 
             var intro = GameScreen.Panel(canvasObject.transform, "Intro Caudal",
                 camera.backgroundColor, Vector2.zero, Vector2.one);
@@ -50,6 +59,7 @@ namespace Caudal
                 yield return null;
             }
             Destroy(intro.gameObject);
+            gameManager.Restart();
         }
     }
 }
