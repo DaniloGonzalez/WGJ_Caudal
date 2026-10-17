@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 namespace Caudal
 {
@@ -43,6 +44,9 @@ namespace Caudal
         public TaskInstance Active { get; private set; }
         public string Message { get; private set; } = "";
 
+        public event Action<TaskInstance, InteractionKind> OnInteractionStarted;
+        public event Action<TaskInstance, InteractionResult> OnInteractionResolved;
+
         public void Initialize(StatsManager stats, DayManager days)
         {
             this.stats = stats;
@@ -71,7 +75,7 @@ namespace Caudal
             // Sacamos cada elegida de la bolsa para no repetirla ese día.
             while (tasks.Count < tasksPerDay && available.Count > 0)
             {
-                int index = Random.Range(0, available.Count);
+                int index = UnityEngine.Random.Range(0, available.Count);
                 tasks.Add(new TaskInstance(++nextId, days.CurrentDay, available[index]));
                 available.RemoveAt(index);
             }
@@ -104,6 +108,9 @@ namespace Caudal
             Active.Status = TaskStatus.InProgress;
             Active.Remaining = Active.Data.executionTimeLimit;
             Message = "Tarea aceptada explícitamente.";
+
+            // Gatillar minijuego
+            OnInteractionStarted?.Invoke(Active, InteractionKind.Execution);
         }
 
         public void Reject()
@@ -162,6 +169,10 @@ namespace Caudal
                     FinishRefusal(task, result);
                     break;
             }
+
+            // Notificar fin del minijuego
+            OnInteractionResolved?.Invoke(task, result);
+
             return true;
         }
 
