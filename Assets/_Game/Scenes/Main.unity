@@ -70,6 +70,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b662896b0ce14fbcb392a61396648df2, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  workerCharacters:
+  - {fileID: 11400000, guid: 6e880851d16e4865946675be8954b16c, type: 2}
+  - {fileID: 11400000, guid: 4d5101d0ab28468a95669cd8458e3adb, type: 2}
+  - {fileID: 11400000, guid: da6b279c17974a819c934eaa8de5145f, type: 2}
+  bossCharacters:
+  - {fileID: 11400000, guid: f0613a514d6e44799d25160d23661dda, type: 2}
+  - {fileID: 11400000, guid: 4f04586c1c1c49da9a1bfc2be4aef584, type: 2}
+  - {fileID: 11400000, guid: 1e5f095279c047a59c6d82334da4116c, type: 2}
 --- !u!114 &104
 MonoBehaviour:
   m_ObjectHideFlags: 0

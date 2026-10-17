@@ -66,3 +66,13 @@ Implementación del plan aprobado, 17-10-2026. Una escena `Main`, estructura `_G
 - HUD del jefe usa texto directo; gráfico usa condiciones explícitas; instrucciones antes comprimidas se separaron para facilitar cambios.
 - Picture crea primero su contenedor y ajusta la imagen una sola vez dentro de él. Se mantiene FitInParent y la importación sin reescalado NPOT.
 - Compilación y validación `PrototypeValidation.Run` completadas con código 0 después de simplificar. Playtest físico y revisión visual siguen siendo comprobaciones manuales.
+
+## Selección de personajes antes de la partida
+
+- Nuevo estado CharacterSelection tras intro y reinicio. Ambos roles deben confirmar; se puede cancelar el estado listo mientras se espera al otro jugador.
+- CharacterData en Gameplay y seis assets en Data/Characters con nombre, retrato, biografía y bonificaciones configurables. Sin arte nuevo: se reutilizan los retratos existentes.
+- CharacterSelectionUI crea la selección dentro del Canvas y actualiza nombres/retratos durante la partida.
+- Cuota y productividad usan bonificaciones aditivas de ambos personajes. Costes de felicidad usan reducciones multiplicativas, incluso para estrés de fallos. Se conservan los modificadores de presión y la protección contra resultados duplicados.
+- El reloj no avanza en selección; los personajes se mantienen entre jornadas. Reiniciar limpia reloj/cuota, confirmaciones y multiplicadores antes de volver a seleccionar.
+- Validación ampliada para recorrer las nueve combinaciones, bloqueo/cancelación de confirmación, cambio circular de perfil, beneficios en éxito/fallo, presión, persistencia y reinicio.
+- Resultado de validación: Unity 6000.7.0b5 terminó con código 0; marcadores `CAUDAL_CHARACTERS_PASSED` y `CAUDAL_VALIDATION_PASSED`. Comprobación visual y de teclado físico pendiente en el editor interactivo.

@@ -14,6 +14,8 @@ namespace Caudal
         public void ResetDays()
         {
             CurrentDay = 0;
+            TimeRemaining = 0;
+            QuotaProgress = 0;
             MissedQuotas = 0;
         }
         public void StartDay()

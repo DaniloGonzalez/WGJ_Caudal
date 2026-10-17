@@ -15,6 +15,27 @@ namespace Caudal
         int nextId;
         StatsManager stats;
         DayManager days;
+        float quotaMultiplier = 1;
+        float productivityMultiplier = 1;
+        float happinessCostMultiplier = 1;
+
+        public void SetCharacters(CharacterData worker, CharacterData boss)
+        {
+            // Se recalcula desde cero: reiniciar nunca acumula bonificaciones.
+            quotaMultiplier = 1;
+            productivityMultiplier = 1;
+            happinessCostMultiplier = 1;
+            ApplyCharacter(worker);
+            ApplyCharacter(boss);
+        }
+
+        void ApplyCharacter(CharacterData character)
+        {
+            if (character == null) return;
+            quotaMultiplier += Mathf.Max(0, character.quotaBonusPercent) / 100;
+            productivityMultiplier += Mathf.Max(0, character.productivityBonusPercent) / 100;
+            happinessCostMultiplier *= 1 - Mathf.Clamp01(character.happinessCostReductionPercent / 100);
+        }
 
         public IReadOnlyList<TaskInstance> Tasks => tasks;
         public TaskInstance Assigning { get; private set; }
@@ -166,7 +187,7 @@ namespace Caudal
             if (result != InteractionResult.Success)
             {
                 task.Status = TaskStatus.Failed;
-                stats.Apply(-failureStress, 0);
+                stats.Apply(-failureStress * happinessCostMultiplier, 0);
                 Message = "Tarea fallida. Sin producción.";
                 return;
             }
@@ -180,8 +201,9 @@ namespace Caudal
             }
 
             task.Status = TaskStatus.Completed;
-            stats.Apply(-task.Data.happinessCost * stress, task.Data.productivityReward * reward);
-            days.AddProduction(task.Data.quotaReward * reward);
+            stats.Apply(-task.Data.happinessCost * stress * happinessCostMultiplier,
+                task.Data.productivityReward * reward * productivityMultiplier);
+            days.AddProduction(task.Data.quotaReward * reward * quotaMultiplier);
             Message = "Tarea completada. Producción registrada.";
         }
 
@@ -197,7 +219,7 @@ namespace Caudal
             else
             {
                 if (result == InteractionResult.Failure)
-                    stats.Apply(-failureStress, 0);
+                    stats.Apply(-failureStress * happinessCostMultiplier, 0);
                 Message = "La solicitud sigue pendiente. Puedes volver a decidir.";
             }
         }

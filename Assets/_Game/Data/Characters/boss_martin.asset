@@ -1,0 +1,15 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9ea734597ddb4b2e99df98de20128638, type: 3}
+  m_Name: boss_martin
+  m_EditorClassIdentifier:
+  role: 1
+  characterName: Martín
+  portrait: {fileID: 2800000, guid: 4b433e5ba746d40518a72e82c1d81d3b, type: 3}
+  biography: Ayuda al equipo a convertir los aciertos en mejoras de productividad.
+  quotaBonusPercent: 0
+  productivityBonusPercent: 15
+  happinessCostReductionPercent: 0

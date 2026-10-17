@@ -1,0 +1,15 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9ea734597ddb4b2e99df98de20128638, type: 3}
+  m_Name: worker_ana
+  m_EditorClassIdentifier:
+  role: 0
+  characterName: Ana
+  portrait: {fileID: 2800000, guid: 06d00f94e475946ebb7963c2779f33ed, type: 3}
+  biography: Metódica y constante. Aprovecha cada tarea para avanzar la cuota.
+  quotaBonusPercent: 20
+  productivityBonusPercent: 0
+  happinessCostReductionPercent: 0

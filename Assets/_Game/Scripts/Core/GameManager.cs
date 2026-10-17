@@ -3,12 +3,20 @@ namespace Caudal
 {
     public enum GameState
     {
-        DayStart, Playing, DaySummary, GameOver
+        DayStart, Playing, DaySummary, GameOver, CharacterSelection
     }
     public sealed class GameManager : MonoBehaviour
     {
         [SerializeField] bool developmentSimulator = true;
         [SerializeField] float missedQuotaProductivityPenalty = 5, endingLow = 40, endingHigh = 60;
+        [SerializeField] CharacterData[] workerCharacters;
+        [SerializeField] CharacterData[] bossCharacters;
+        int workerIndex, bossIndex;
+        public bool WorkerReady { get; private set; }
+        public bool BossReady { get; private set; }
+        public CharacterData WorkerCharacter => GetCharacter(false);
+        public CharacterData BossCharacter => GetCharacter(true);
+
         public GameState State { get; private set; } = GameState.DayStart;
         public StatsManager Stats { get; private set; }
         public DayManager Days { get; private set; }
@@ -29,9 +37,66 @@ namespace Caudal
 
         public void Restart()
         {
+            Tasks.EndDay();
+            Tasks.SetCharacters(null, null);
             Stats.ResetStats();
             Days.ResetDays();
+            workerIndex = bossIndex = 0;
+            WorkerReady = BossReady = false;
+            State = GameState.CharacterSelection;
+        }
+
+        CharacterData GetCharacter(bool boss)
+        {
+            var characters = boss ? bossCharacters : workerCharacters;
+            int index = boss ? bossIndex : workerIndex;
+            if (characters == null || index >= characters.Length) return null;
+            var character = characters[index];
+            var role = boss ? CharacterRole.Boss : CharacterRole.Worker;
+            return character != null && character.role == role ? character : null;
+        }
+
+        public void SelectCharacter(bool boss, int direction)
+        {
+            if (State != GameState.CharacterSelection) return;
+            if (boss ? BossReady : WorkerReady) return;
+            var characters = boss ? bossCharacters : workerCharacters;
+            if (characters == null || characters.Length == 0) return;
+            int index = boss ? bossIndex : workerIndex;
+            index = (index + direction % characters.Length + characters.Length) % characters.Length;
+            if (boss) bossIndex = index;
+            else workerIndex = index;
+        }
+
+        public void ConfirmCharacter(bool boss)
+        {
+            if (State != GameState.CharacterSelection || GetCharacter(boss) == null) return;
+            if (boss) BossReady = true;
+            else WorkerReady = true;
+            if (!WorkerReady || !BossReady) return;
+
+            Tasks.SetCharacters(WorkerCharacter, BossCharacter);
             BeginDay();
+        }
+
+        public void CancelCharacter(bool boss)
+        {
+            if (State != GameState.CharacterSelection) return;
+            if (boss) BossReady = false;
+            else WorkerReady = false;
+        }
+
+        void ReadCharacterInput(bool boss)
+        {
+            var keys = boss ? Input.boss : Input.worker;
+            if (Input.Pressed(keys.cancel))
+            {
+                CancelCharacter(boss);
+                return;
+            }
+            if (Input.Pressed(keys.up)) SelectCharacter(boss, -1);
+            if (Input.Pressed(keys.down)) SelectCharacter(boss, 1);
+            if (Input.Pressed(keys.confirm)) ConfirmCharacter(boss);
         }
 
         void BeginDay()
@@ -48,6 +113,13 @@ namespace Caudal
             // La intro todavía no ha arrancado la partida.
             if (Input == null || State == GameState.DayStart)
                 return;
+
+            if (State == GameState.CharacterSelection)
+            {
+                ReadCharacterInput(false);
+                ReadCharacterInput(true);
+                return;
+            }
 
             if (State != GameState.Playing)
             {
