@@ -12,9 +12,9 @@ Unity **6000.7.0b5**. Abre `Assets/_Game/Scenes/Main.unity` y pulsa **Play**. La
 | Cambiar estrategia | — | Ctrl derecho |
 | Resultado simulado: éxito / fallo | F / G | Enter / Shift derecho |
 
-Una pulsación inicia la interacción; una pulsación posterior resuelve el simulador. Confirmar con F o Enter avanza el resumen y reinicia desde la pantalla final. Las teclas se editan en InputRouter del objeto Game. No requiere mouse ni teclado numérico.
+En interacciones sin minijuego asignado en TaskData, una pulsación inicia la interacción y otra resuelve el simulador. Confirmar con F o Enter avanza el resumen y reinicia desde la pantalla final. Las teclas se editan en InputRouter del objeto Game. No requiere mouse ni teclado numérico.
 
-**Minijuegos diferidos:** el prototipo usa un simulador visible de resultados; no incluye ventanas ni mecánicas de minijuegos. La otra persona podrá conectarlos siguiendo [el contrato](Docs/MinigameIntegration.md).
+**Minijuegos:** hay seis mecánicas conectadas mediante ventanas y prefabs por rol. El simulador sigue disponible para interacciones sin prefab asignado en TaskData. Consulta [el contrato](Docs/GuiaDesarrollo.md#ventanas-e-integración-de-resultados).
 
 ## Configuración
 
@@ -29,7 +29,7 @@ Selecciona **Game** en Main:
 
 Crea tareas con **Assets > Create > Caudal > Tarea**, guárdalas en `_Game/Data/Tasks` y agrégalas al catálogo de TaskManager. Asigna un taskId único. Cuota y productividad son recompensas separadas.
 
-La cámara y el Canvas `Game UI` están guardados en Main. Edita la interfaz en escena y en los prefabs de `Assets/_Game/Prefabs/UI`; consulta [UI-Prefabs](Docs/UI-Prefabs.md). La UI usa los cuatro PNG existentes de `Art/Sprites/placeholders_oficina_gamejam`; no se generó arte nuevo. La escena ya está incluida en Build Settings.
+La cámara y el Canvas `Game UI` están guardados en Main. Edita la interfaz en escena y en los prefabs de `Assets/_Game/Prefabs/UI`; consulta [la guía de UI](Docs/GuiaDesarrollo.md#ui-editable-mediante-prefabs). La UI usa los cuatro PNG existentes de `Art/Sprites/placeholders_oficina_gamejam`; no se generó arte nuevo. La escena ya está incluida en Build Settings.
 
 ## Estructura
 
@@ -43,7 +43,7 @@ La cámara y el Canvas `Game UI` están guardados en Main. Edita la interfaz en 
 
 Menú **Caudal > Validar lógica del prototipo** (fuera de Play): verifica catálogo, límites de solicitudes, decisiones, recompensas únicas, expiración, cinco días, reinicio y referencias UI. Ejecuta la validación en una escena temporal adicional, sin guardar cambios.
 
-Consulta [el control de tareas](Docs/DevelopmentPlan.md). Quedan pendientes la integración de minijuegos, revisión visual, playtest de dos personas en el teclado real y balance.
+Consulta [el control de tareas](Docs/GuiaDesarrollo.md#seguimiento-y-pendientes). Quedan pendientes ampliar la cobertura de minijuegos, la conversación específica de rechazo, el playtest de dos personas en el teclado real y el balance.
 
 ## Selección de personajes
 
