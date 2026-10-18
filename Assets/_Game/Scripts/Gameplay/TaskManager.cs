@@ -95,6 +95,7 @@ namespace Caudal
             Assigning.Status = TaskStatus.Assigning;
             Assigning.Remaining = Assigning.Data.assignmentTimeLimit;
             Message = "Asignación en curso.";
+            OnInteractionStarted?.Invoke(Assigning, InteractionKind.Assignment);
             return true;
         }
 
@@ -124,6 +125,7 @@ namespace Caudal
                 Pending.Refusing = true;
                 Pending.Remaining = 10;
                 Message = "Rechazo insistente: falta resolver la conversación.";
+                OnInteractionStarted?.Invoke(Pending, InteractionKind.Refusal);
                 return;
             }
 

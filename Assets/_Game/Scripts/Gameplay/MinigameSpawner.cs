@@ -28,6 +28,11 @@ public class MinigameSpawner : MonoBehaviour
             taskManager.OnInteractionStarted -= HandleInteractionStarted;
             taskManager.OnInteractionResolved -= HandleInteractionResolved;
         }
+        if (currentPopup != null)
+        {
+            currentPopup.ClosePopUp();
+            currentPopup = null;
+        }
     }
 
     public void HandleInteractionStarted(TaskInstance task, InteractionKind kind) {
@@ -45,12 +50,27 @@ public class MinigameSpawner : MonoBehaviour
             return;
         }
 
+        if (task == null || task.Data == null)
+        {
+            Debug.LogError("MinigameSpawner: la interacción no tiene una tarea válida.", this);
+            return;
+        }
+
         GameObject prefabToSpawn = task.Data.minigamePrefab != null ? task.Data.minigamePrefab : fallbackMinigamePrefab;
 
         GameObject popupInstance = Instantiate(popupBasePrefab, canvasObj.transform, false);
 
         if (popupInstance.TryGetComponent<PopUpController>(out currentPopup)) {
-            currentPopup.Setup(task, kind, prefabToSpawn, (result) => taskManager.Resolve(task.Id, task.Day, kind, result));
+            currentPopup.Setup(task, kind, prefabToSpawn, (result) =>
+            {
+                if (taskManager != null)
+                    taskManager.Resolve(task.Id, task.Day, kind, result);
+            });
+        }
+        else
+        {
+            Destroy(popupInstance);
+            Debug.LogError("MinigameSpawner: popupBasePrefab no tiene PopUpController.", this);
         }
     }
 

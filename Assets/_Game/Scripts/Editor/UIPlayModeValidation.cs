@@ -158,7 +158,9 @@ namespace Caudal.Editor
                     ProfileVisible(bossCard, game.BossCharacter);
                     await Press(game.Input.worker.down, game.Input.boss.down);
                 }
-                Check(workers.Count == 3 && bosses.Count == 3, "Three independent profiles per role using simultaneous input");
+                Check(workers.Count == 3 && bosses.Count == 3,
+                    "Three independent profiles per role using simultaneous input (worker: " + string.Join(", ", workers.Select(c => c.characterName)) +
+                    "; boss: " + string.Join(", ", bosses.Select(c => c.characterName)) + ")");
                 await Press(game.Input.worker.confirm);
                 Check(game.WorkerReady && !game.BossReady && game.State == GameState.CharacterSelection, "Worker ready waits for boss");
                 Check(workerCard.transform.Find("Ready").gameObject.activeSelf, "Ready indicator visible");
@@ -180,12 +182,26 @@ namespace Caudal.Editor
                 await Press(game.Input.boss.confirm);
                 var first = game.Tasks.Assigning;
                 Check(first != null, "Assignment started with boss input");
+                var bossPopup = Find<PopUpController>();
+                Check(bossPopup != null && ((RectTransform)bossPopup.transform).anchorMin.x == .5f &&
+                    bossPopup.GetComponentsInChildren<Text>(true).Any(t => t.text.Contains("JEFE")),
+                    "Boss assignment minigame window opens on the right half");
+                Capture("minigame-boss-window");
                 await Press(game.Input.boss.confirm);
                 Check(game.Tasks.Pending == first, "Assignment simulator success");
+                Check(Find<PopUpController>() == null, "Boss assignment window closes after resolution");
                 await Press(game.Input.worker.confirm);
                 Check(game.Tasks.Active == first, "Explicit acceptance with worker input");
+                var minigameWindow = Find<PopUpController>();
+                Check(minigameWindow != null && minigameWindow.gameObject.activeInHierarchy &&
+                    ((RectTransform)minigameWindow.transform).anchorMax.x == .5f, "Worker execution minigame window opens on the left half");
+                var popupTexts = minigameWindow.GetComponentsInChildren<Text>(true).Select(t => t.text).ToArray();
+                Check(popupTexts.Contains(first.Data.taskName) && popupTexts.Contains(first.Data.description), "Minigame window shows task title and description");
+                Check(popupTexts.Any(t => t.Contains("TRABAJADOR: F")) && popupTexts.Any(t => t.Contains("MINIJUEGO EN PREPARACIÓN")), "Minigame window shows role controls and content area");
+                Capture("minigame-window");
                 await Press(game.Input.worker.confirm);
                 Check(first.Status == Caudal.TaskStatus.Completed && game.Days.QuotaProgress > 0, "Execution simulator success and quota");
+                Check(Find<PopUpController>() == null, "Minigame window closes after its result resolves");
                 var graph = Find<StatsGraphUI>();
                 var marker = (RectTransform)graph.transform.Find("Plot/Marker");
                 Check(Vector2.Distance(marker.anchorMin, new Vector2(game.Stats.Happiness, game.Stats.Productivity) / 100) < .001f,

@@ -1,0 +1,9 @@
+CAUDAL_MINIGAME_POPUP_PASSED (1920x1080):
+Main inicia una jornada con ambos roles
+La asignación abre una ventana del jefe en la mitad derecha
+La ejecución abre una ventana del trabajador al aceptar la tarea
+La ventana presenta título y descripción de TaskData
+La ventana muestra rol, controles y área de minijuego
+Cancelar dispone de botón opcional y EventSystem
+Cancelar resuelve una vez y cierra la ventana
+La ventana se limpia al expirar la tarea

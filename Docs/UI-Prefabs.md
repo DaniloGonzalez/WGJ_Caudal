@@ -26,6 +26,8 @@ Las únicas texturas usadas son los cuatro PNG existentes de `Art/Sprites/placeh
 
 `Game UI` mantiene el nombre que busca `MinigameSpawner` para instanciar el `PopUp.prefab` del equipo. `PopUp.prefab`, `PopUpController`, `IMinigame` y los eventos de `TaskManager` se conservaron.
 
+La ventana de minijuegos del prefab existente `Assets/_Game/Prefabs/PopUp.prefab` se edita aparte: tiene título y descripción de tarea, rol, reloj, barra de tiempo, controles, zona donde se instancia `TaskData.minigamePrefab` y estado vacío mientras no haya minijuego asignado. Se ancla a la mitad izquierda para el trabajador y derecha para el jefe. El detalle y las capturas están en [MinigameIntegration.md](MinigameIntegration.md).
+
 ## Verificación
 
 - Unity 6000.7.0b5: compilación correcta, sin errores ni advertencias nuevos.
