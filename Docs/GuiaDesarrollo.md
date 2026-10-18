@@ -66,6 +66,10 @@ Las teclas se configuran en `InputRouter`. Cada panel/minijuego procesa su rol s
 
 Los perfiles se mantienen entre jornadas. Reiniciar limpia confirmaciones y multiplicadores. Los porcentajes de cuota/productividad de ambos perfiles se suman; las reducciones de coste de felicidad se multiplican. También reducen el estrés de fallos, pero no modifican la penalización de productividad por cuota incumplida.
 
+Cada `CharacterData` contiene sus propias `dialogueLines`. Añade una entrada por acción o resultado que quieras personalizar; `trigger` selecciona cuándo se muestra, `text` define lo que dice ese personaje y `duration` cuánto permanece en pantalla. Las líneas de asignación y cierre de jornada corresponden al jefe; las de ejecución, rechazo y urgencia corresponden al trabajador. Si el personaje seleccionado no tiene una línea configurada para el evento, no se muestra diálogo. `speechClip` es opcional y se reproduce junto a una línea configurada.
+
+`TaskData.minigameWindowBackground` define el fondo del popup de minijuego para esa tarea; `taskArtwork` se reserva para el arte pequeño opcional de su tarjeta. Las ventanas mantienen un tinte distinto para jefe y trabajador sobre el fondo configurado.
+
 ## Tareas y reglas de jornada
 
 - `TaskData` define datos y recompensas; `TaskInstance` guarda identificador, jornada, estrategia, estado y tiempo restante.

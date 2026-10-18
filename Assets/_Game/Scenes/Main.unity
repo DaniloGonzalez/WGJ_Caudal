@@ -259,6 +259,7 @@ MonoBehaviour:
   pressureRewardMultiplier: 1.5
   pressureStressMultiplier: 2
   failureStress: 2
+  backlogUrgencyThreshold: 2
 --- !u!114 &107
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2026,19 +2027,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 564505123482071139, guid: e9ae128a189552749a91f79edf146edd, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.64
+      value: 0.625
       objectReference: {fileID: 0}
     - target: {fileID: 564505123482071139, guid: e9ae128a189552749a91f79edf146edd, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.48
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 564505123482071139, guid: e9ae128a189552749a91f79edf146edd, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.015
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 564505123482071139, guid: e9ae128a189552749a91f79edf146edd, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.03
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 564505123482071139, guid: e9ae128a189552749a91f79edf146edd, type: 3}
       propertyPath: m_SizeDelta.x
@@ -2191,19 +2192,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3070766090268230265, guid: 86ca536925232514abd0362838b8074e, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.64
+      value: 0.625
       objectReference: {fileID: 0}
     - target: {fileID: 3070766090268230265, guid: 86ca536925232514abd0362838b8074e, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.97
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3070766090268230265, guid: 86ca536925232514abd0362838b8074e, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.015
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3070766090268230265, guid: 86ca536925232514abd0362838b8074e, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.52
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 3070766090268230265, guid: 86ca536925232514abd0362838b8074e, type: 3}
       propertyPath: m_SizeDelta.x

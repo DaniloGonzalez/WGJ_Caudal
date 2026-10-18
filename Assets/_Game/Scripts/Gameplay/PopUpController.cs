@@ -40,10 +40,25 @@ public class PopUpController : MonoBehaviour
         if (window != null)
         {
             var windowRect = window as RectTransform;
-            windowRect.sizeDelta = new Vector2(410, 250);
             var panel = window.GetComponent<Image>();
-            if (panel != null) panel.color = bossRole ? new Color(.22f, .25f, .43f, .96f) : new Color(.16f, .34f, .31f, .96f);
+            if (panel != null)
+            {
+                panel.sprite = task.Data.minigameWindowBackground;
+                panel.type = Image.Type.Simple;
+                panel.preserveAspect = panel.sprite != null;
+                float windowHeight = 400f;
+                float aspect = panel.sprite != null
+                    ? panel.sprite.rect.width / panel.sprite.rect.height
+                    : 410f / 250f;
+                windowRect.sizeDelta = new Vector2(windowHeight * aspect, windowHeight);
+                panel.color = panel.sprite == null
+                    ? bossRole ? new Color(.22f, .25f, .43f, .96f) : new Color(.16f, .34f, .31f, .96f)
+                    : bossRole ? new Color(.96f, .96f, 1f, 1f) : new Color(.94f, 1f, .94f, 1f);
+            }
         }
+        SetImageBackgroundAlpha("Header", 0f);
+        SetImageBackgroundAlpha("MinigameContainer", 0f);
+        SetImageBackgroundAlpha("MinigameContainer/EmptyMinigameState", 0f);
         ConfigureCompactLayout();
         if (titleText != null) titleText.text = task.Data.taskName;
         if (taskDescriptionText != null) taskDescriptionText.text = task.Data.description;
@@ -74,16 +89,50 @@ public class PopUpController : MonoBehaviour
         RefreshTimer();
     }
 
+    private void SetImageBackgroundAlpha(string childPath, float alpha)
+    {
+        var child = transform.Find("Window/" + childPath);
+        var image = child != null ? child.GetComponent<Image>() : null;
+        if (image == null) return;
+        var color = image.color;
+        color.a = alpha;
+        image.color = color;
+    }
+
     private void ConfigureCompactLayout()
     {
-        SetRect(titleText != null ? titleText.rectTransform : null, new Vector2(.5f, 1), new Vector2(.5f, 1), new Vector2(0, -21), new Vector2(380, 34));
-        SetRect(taskDescriptionText != null ? taskDescriptionText.rectTransform : null, new Vector2(.5f, 1), new Vector2(.5f, 1), new Vector2(0, -55), new Vector2(380, 30));
-        SetRect(roleText != null ? roleText.rectTransform : null, new Vector2(0, 1), new Vector2(0, 1), new Vector2(14, -15), new Vector2(250, 28));
-        SetRect(timerText != null ? timerText.rectTransform : null, new Vector2(1, 1), new Vector2(1, 1), new Vector2(-53, -15), new Vector2(80, 28));
-        SetRect(minigameContainer, new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(0, -10), new Vector2(370, 112));
+        SetRect(titleText != null ? titleText.rectTransform : null, new Vector2(0, 1), new Vector2(0, 1), new Vector2(25, -22), new Vector2(220, 30));
+        if (titleText != null)
+        {
+            titleText.rectTransform.pivot = new Vector2(0, .5f);
+            titleText.alignment = TextAnchor.MiddleLeft;
+            titleText.resizeTextForBestFit = true;
+            titleText.resizeTextMinSize = 12;
+            titleText.resizeTextMaxSize = 19;
+            titleText.horizontalOverflow = HorizontalWrapMode.Overflow;
+            titleText.verticalOverflow = VerticalWrapMode.Truncate;
+        }
+        SetRect(taskDescriptionText != null ? taskDescriptionText.rectTransform : null, new Vector2(.5f, 1), new Vector2(.5f, 1), new Vector2(0, -104), new Vector2(310, 38));
+        SetRect(roleText != null ? roleText.rectTransform : null, new Vector2(0, 1), new Vector2(0, 1), new Vector2(25, -65), new Vector2(190, 26));
+        SetRect(timerText != null ? timerText.rectTransform : null, new Vector2(1, 1), new Vector2(1, 1), new Vector2(-24, -65), new Vector2(82, 26));
+        if (roleText != null)
+        {
+            roleText.rectTransform.pivot = new Vector2(0, .5f);
+            roleText.alignment = TextAnchor.MiddleLeft;
+            roleText.resizeTextForBestFit = true;
+            roleText.resizeTextMinSize = 10;
+            roleText.resizeTextMaxSize = 14;
+            roleText.horizontalOverflow = HorizontalWrapMode.Overflow;
+        }
+        if (timerText != null)
+        {
+            timerText.rectTransform.pivot = new Vector2(1, .5f);
+            timerText.alignment = TextAnchor.MiddleRight;
+        }
+        SetRect(minigameContainer, new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(0, -18), new Vector2(320, 112));
         if (placeholderContent != null)
             SetRect(placeholderContent.transform as RectTransform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
-        SetRect(controlsText != null ? controlsText.rectTransform : null, new Vector2(.5f, 0), new Vector2(.5f, 0), new Vector2(-65, 22), new Vector2(240, 34));
+        SetRect(controlsText != null ? controlsText.rectTransform : null, new Vector2(.5f, 0), new Vector2(.5f, 0), new Vector2(-48, 22), new Vector2(220, 34));
         if (closeButton != null)
             SetRect(closeButton.transform as RectTransform, new Vector2(1, 0), new Vector2(1, 0), new Vector2(-45, 22), new Vector2(82, 34));
     }

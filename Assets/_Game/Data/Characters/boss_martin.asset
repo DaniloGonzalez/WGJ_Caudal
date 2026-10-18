@@ -15,6 +15,38 @@ MonoBehaviour:
   role: 1
   characterName: Josefa
   portrait: {fileID: 2800000, guid: 4b433e5ba746d40518a72e82c1d81d3b, type: 3}
+  speechClip: {fileID: 0}
+  dialogueLines:
+  - trigger: 1
+    text: "\xA1Otro d\xEDa en la oficina!\n"
+    duration: 3
+  - trigger: 1
+    text: "\xA1No hay problema!\n"
+    duration: 3
+  - trigger: 1
+    text: "Ojal\xE1 crezcamos como equipo\n"
+    duration: 3
+  - trigger: 1
+    text: 'Aww mi jefa siempre sabe lo que necesitamos
+
+'
+    duration: 3
+  - trigger: 1
+    text: "Si te dan mucho trabajo, es porque conf\xEDan en ti\n"
+    duration: 3
+  - trigger: 1
+    text: 'Si quieres buenos resultados, el buen trabajo y un buen liderazgo son prioridad
+
+'
+    duration: 3
+  - trigger: 1
+    text: 'Aww mi jefa siempre sabe lo que necesitamos
+
+'
+    duration: 3
+  - trigger: 1
+    text: "\xA1Estoy listo!\n"
+    duration: 3
   biography: "Hija de una doctora y de un ingeniero. Josefa es la mayor de una familia de profesionales y se le nota. En c\xF3mo habla, c\xF3mo camina y se mueve. Precisa, correcta y emocionalmente estable. Josefa sabe bien c\xF3mo manejar un equipo y una empresa. "
   quotaBonusPercent: 0
   productivityBonusPercent: 15

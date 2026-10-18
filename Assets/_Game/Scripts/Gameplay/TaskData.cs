@@ -13,6 +13,8 @@ namespace Caudal
 
         [Header("Presentación")]
         public Sprite taskArtwork;
+        [Tooltip("Fondo del popup de minijuego para esta tarea.")]
+        public Sprite minigameWindowBackground;
 
         [Header("Minijuego")]
         public GameObject bossMinigamePrefab;

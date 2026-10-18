@@ -22,6 +22,8 @@ MonoBehaviour:
   assignmentTimeLimit: 12
   executionTimeLimit: 10
   requiresRefusalMinigame: 0
+  taskArtwork: {fileID: 0}
+  minigameWindowBackground: {fileID: 21300000, guid: 54c2776f66ef742a2ac5172da3934685, type: 3}
   bossMinigamePrefab: {fileID: 4455939194836957118, guid: 7bd0a91d0bf59c644ba1a3f63b793b51, type: 3}
   workerMinigamePrefab: {fileID: 7737986671711358449, guid: 6bc5d4f29ef88f940b2c9f58c876d89c, type: 3}
   minigamePrefab: {fileID: 0}
