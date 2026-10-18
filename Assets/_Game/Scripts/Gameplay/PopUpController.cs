@@ -64,10 +64,11 @@ public class PopUpController : MonoBehaviour
                     : bossRole ? new Color(.96f, .96f, 1f, 1f) : new Color(.94f, 1f, .94f, 1f);
             }
         }
-        SetImageBackgroundAlpha("Header", 0f);
-        SetImageBackgroundAlpha("MinigameContainer", 0f);
-        SetImageBackgroundAlpha("MinigameContainer/EmptyMinigameState", 0f);
-        ConfigureCompactLayout();
+        SetImageBackgroundAlpha("Header", bossRole
+            ? new Color(.96f, .62f, .28f, 1f)
+            : new Color(.32f, .65f, .95f, 1f));
+        SetImageBackgroundAlpha("MinigameContainer", Color.clear);
+        SetImageBackgroundAlpha("MinigameContainer/EmptyMinigameState", Color.clear);
         if (titleText != null) titleText.text = task.Data.taskName;
         if (taskDescriptionText != null) taskDescriptionText.text = task.Data.description;
         if (roleText != null) roleText.text = kind == InteractionKind.Assignment ? "JEFE · ASIGNACIÓN" : "TRABAJADOR · " + (kind == InteractionKind.Refusal ? "CONVERSACIÓN" : "TAREA");
@@ -90,6 +91,8 @@ public class PopUpController : MonoBehaviour
         }
         if (placeholderContent != null) placeholderContent.SetActive(!hasMinigame);
 
+        ConfigureCompactLayout(hasMinigame);
+
         if (closeButton != null) {
             closeButton.onClick.RemoveAllListeners();
             closeButton.onClick.AddListener(() => FinishMinigame(InteractionResult.Cancelled));
@@ -97,30 +100,58 @@ public class PopUpController : MonoBehaviour
         RefreshTimer();
     }
 
-    private void SetImageBackgroundAlpha(string childPath, float alpha)
+    private void SetImageBackgroundAlpha(string childPath, Color color)
     {
         var child = transform.Find("Window/" + childPath);
         var image = child != null ? child.GetComponent<Image>() : null;
         if (image == null) return;
-        var color = image.color;
-        color.a = alpha;
         image.color = color;
     }
 
-    private void ConfigureCompactLayout()
+    private void ConfigureCompactLayout(bool hasMinigame)
     {
-        SetRect(titleText != null ? titleText.rectTransform : null, new Vector2(0, 1), new Vector2(0, 1), new Vector2(22, -22), new Vector2(220, 32));
+        var window = transform.Find("Window") as RectTransform;
+        var header = transform.Find("Window/Header") as RectTransform;
+        if (header != null)
+            SetRect(header, new Vector2(.02f, 1), new Vector2(.98f, 1), new Vector2(0, -4), new Vector2(0, 42));
+
+        SetRect(titleText != null ? titleText.rectTransform : null, new Vector2(0, 1), new Vector2(1, 1), new Vector2(18, -22), new Vector2(-36, 38));
         if (titleText != null)
         {
             titleText.rectTransform.pivot = new Vector2(0, .5f);
             titleText.alignment = TextAnchor.MiddleLeft;
             titleText.resizeTextForBestFit = true;
-            titleText.resizeTextMinSize = 12;
-            titleText.resizeTextMaxSize = 16;
+            titleText.resizeTextMinSize = 13;
+            titleText.resizeTextMaxSize = 19;
             titleText.horizontalOverflow = HorizontalWrapMode.Wrap;
             titleText.verticalOverflow = VerticalWrapMode.Truncate;
-            titleText.fontSize = 16;
+            titleText.fontSize = 19;
         }
+
+        if (hasMinigame)
+        {
+            // Los mockups ya incluyen sus instrucciones y su HUD dentro del juego.
+            // Dejamos el título del popup y el área de juego como contenido principal.
+            if (taskDescriptionText != null) taskDescriptionText.gameObject.SetActive(false);
+            if (roleText != null) roleText.gameObject.SetActive(false);
+            if (timerText != null) timerText.gameObject.SetActive(false);
+            if (timerFill != null) timerFill.gameObject.SetActive(false);
+            if (controlsText != null) controlsText.gameObject.SetActive(false);
+            if (closeButton != null) closeButton.gameObject.SetActive(false);
+
+            if (window != null && minigameContainer != null)
+            {
+                float headerHeight = header != null ? header.sizeDelta.y : 42f;
+                float width = Mathf.Max(1f, window.rect.width - 20f);
+                float height = Mathf.Max(1f, window.rect.height - headerHeight - 14f);
+                SetRect(minigameContainer, new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(0, -headerHeight * .5f - 2f), new Vector2(width, height));
+            }
+
+            if (placeholderContent != null)
+                SetRect(placeholderContent.transform as RectTransform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            return;
+        }
+
         SetRect(taskDescriptionText != null ? taskDescriptionText.rectTransform : null, new Vector2(.5f, 1), new Vector2(.5f, 1), new Vector2(0, -108), new Vector2(310, 44));
         SetRect(roleText != null ? roleText.rectTransform : null, new Vector2(0, 1), new Vector2(0, 1), new Vector2(22, -65), new Vector2(160, 26));
         SetRect(timerText != null ? timerText.rectTransform : null, new Vector2(1, 1), new Vector2(1, 1), new Vector2(-22, -65), new Vector2(72, 26));
