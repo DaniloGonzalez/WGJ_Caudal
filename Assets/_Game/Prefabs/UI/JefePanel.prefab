@@ -35,8 +35,8 @@ RectTransform:
   - {fileID: 3579063550212147089}
   m_Father: {fileID: 3070766090268230265}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.04, y: 0.1}
-  m_AnchorMax: {x: 0.96, y: 0.34}
+  m_AnchorMin: {x: 0.66, y: 0.1}
+  m_AnchorMax: {x: 0.96, y: 0.47}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -488,12 +488,12 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
-    m_FontSize: 17
+    m_Font: {fileID: 12800000, guid: 38c15e46d18f9420283718c7c6c0e5be, type: 3}
+    m_FontSize: 10
     m_FontStyle: 0
-    m_BestFit: 1
-    m_MinSize: 12
-    m_MaxSize: 17
+    m_BestFit: 0
+    m_MinSize: 10
+    m_MaxSize: 10
     m_Alignment: 4
     m_AlignByGeometry: 0
     m_RichText: 1
@@ -568,12 +568,12 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
-    m_FontSize: 26
+    m_Font: {fileID: 12800000, guid: 38c15e46d18f9420283718c7c6c0e5be, type: 3}
+    m_FontSize: 18
     m_FontStyle: 0
-    m_BestFit: 1
-    m_MinSize: 12
-    m_MaxSize: 26
+    m_BestFit: 0
+    m_MinSize: 18
+    m_MaxSize: 18
     m_Alignment: 4
     m_AlignByGeometry: 0
     m_RichText: 1
@@ -648,12 +648,12 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
-    m_FontSize: 20
+    m_Font: {fileID: 12800000, guid: 38c15e46d18f9420283718c7c6c0e5be, type: 3}
+    m_FontSize: 12
     m_FontStyle: 0
-    m_BestFit: 1
+    m_BestFit: 0
     m_MinSize: 12
-    m_MaxSize: 20
+    m_MaxSize: 12
     m_Alignment: 4
     m_AlignByGeometry: 0
     m_RichText: 1
@@ -672,6 +672,14 @@ PrefabInstance:
     - target: {fileID: 462398694802812787, guid: 0ec115c0132117c478932711c89de4b8, type: 3}
       propertyPath: m_Text
       value: Organizar agenda
+      objectReference: {fileID: 0}
+    - target: {fileID: 462398694802812787, guid: 0ec115c0132117c478932711c89de4b8, type: 3}
+      propertyPath: m_FontData.m_Font
+      value:
+      objectReference: {fileID: 12800000, guid: 38c15e46d18f9420283718c7c6c0e5be, type: 3}
+    - target: {fileID: 462398694802812787, guid: 0ec115c0132117c478932711c89de4b8, type: 3}
+      propertyPath: m_FontData.m_MinSize
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 757622813048944611, guid: 0ec115c0132117c478932711c89de4b8, type: 3}
       propertyPath: m_IsActive
@@ -761,6 +769,22 @@ PrefabInstance:
       propertyPath: m_Name
       value: TaskCard 3
       objectReference: {fileID: 0}
+    - target: {fileID: 4470161869077365803, guid: 0ec115c0132117c478932711c89de4b8, type: 3}
+      propertyPath: m_FontData.m_Font
+      value:
+      objectReference: {fileID: 12800000, guid: 38c15e46d18f9420283718c7c6c0e5be, type: 3}
+    - target: {fileID: 4470161869077365803, guid: 0ec115c0132117c478932711c89de4b8, type: 3}
+      propertyPath: m_FontData.m_MinSize
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 6097459568513824790, guid: 0ec115c0132117c478932711c89de4b8, type: 3}
+      propertyPath: m_FontData.m_Font
+      value:
+      objectReference: {fileID: 12800000, guid: 38c15e46d18f9420283718c7c6c0e5be, type: 3}
+    - target: {fileID: 6097459568513824790, guid: 0ec115c0132117c478932711c89de4b8, type: 3}
+      propertyPath: m_FontData.m_MinSize
+      value: 8
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -793,6 +817,14 @@ PrefabInstance:
     - target: {fileID: 462398694802812787, guid: 0ec115c0132117c478932711c89de4b8, type: 3}
       propertyPath: m_Text
       value: Revisar correo
+      objectReference: {fileID: 0}
+    - target: {fileID: 462398694802812787, guid: 0ec115c0132117c478932711c89de4b8, type: 3}
+      propertyPath: m_FontData.m_Font
+      value:
+      objectReference: {fileID: 12800000, guid: 38c15e46d18f9420283718c7c6c0e5be, type: 3}
+    - target: {fileID: 462398694802812787, guid: 0ec115c0132117c478932711c89de4b8, type: 3}
+      propertyPath: m_FontData.m_MinSize
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 757622813048944611, guid: 0ec115c0132117c478932711c89de4b8, type: 3}
       propertyPath: m_IsActive
@@ -882,6 +914,22 @@ PrefabInstance:
       propertyPath: m_Name
       value: TaskCard 2
       objectReference: {fileID: 0}
+    - target: {fileID: 4470161869077365803, guid: 0ec115c0132117c478932711c89de4b8, type: 3}
+      propertyPath: m_FontData.m_Font
+      value:
+      objectReference: {fileID: 12800000, guid: 38c15e46d18f9420283718c7c6c0e5be, type: 3}
+    - target: {fileID: 4470161869077365803, guid: 0ec115c0132117c478932711c89de4b8, type: 3}
+      propertyPath: m_FontData.m_MinSize
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 6097459568513824790, guid: 0ec115c0132117c478932711c89de4b8, type: 3}
+      propertyPath: m_FontData.m_Font
+      value:
+      objectReference: {fileID: 12800000, guid: 38c15e46d18f9420283718c7c6c0e5be, type: 3}
+    - target: {fileID: 6097459568513824790, guid: 0ec115c0132117c478932711c89de4b8, type: 3}
+      propertyPath: m_FontData.m_MinSize
+      value: 8
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -914,6 +962,14 @@ PrefabInstance:
     - target: {fileID: 462398694802812787, guid: 0ec115c0132117c478932711c89de4b8, type: 3}
       propertyPath: m_Text
       value: Preparar informe
+      objectReference: {fileID: 0}
+    - target: {fileID: 462398694802812787, guid: 0ec115c0132117c478932711c89de4b8, type: 3}
+      propertyPath: m_FontData.m_Font
+      value:
+      objectReference: {fileID: 12800000, guid: 38c15e46d18f9420283718c7c6c0e5be, type: 3}
+    - target: {fileID: 462398694802812787, guid: 0ec115c0132117c478932711c89de4b8, type: 3}
+      propertyPath: m_FontData.m_MinSize
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 4127430867569030728, guid: 0ec115c0132117c478932711c89de4b8, type: 3}
       propertyPath: m_Pivot.x
@@ -998,6 +1054,22 @@ PrefabInstance:
     - target: {fileID: 4149008275123549592, guid: 0ec115c0132117c478932711c89de4b8, type: 3}
       propertyPath: m_Name
       value: TaskCard 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4470161869077365803, guid: 0ec115c0132117c478932711c89de4b8, type: 3}
+      propertyPath: m_FontData.m_Font
+      value:
+      objectReference: {fileID: 12800000, guid: 38c15e46d18f9420283718c7c6c0e5be, type: 3}
+    - target: {fileID: 4470161869077365803, guid: 0ec115c0132117c478932711c89de4b8, type: 3}
+      propertyPath: m_FontData.m_MinSize
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 6097459568513824790, guid: 0ec115c0132117c478932711c89de4b8, type: 3}
+      propertyPath: m_FontData.m_Font
+      value:
+      objectReference: {fileID: 12800000, guid: 38c15e46d18f9420283718c7c6c0e5be, type: 3}
+    - target: {fileID: 6097459568513824790, guid: 0ec115c0132117c478932711c89de4b8, type: 3}
+      propertyPath: m_FontData.m_MinSize
+      value: 8
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

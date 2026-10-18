@@ -5,24 +5,21 @@ namespace Caudal
 {
     public sealed class StatsGraphUI : MonoBehaviour
     {
-        [SerializeField] RectTransform marker;
-        [SerializeField] Text valuesLabel, stateLabel, messageLabel;
+        [SerializeField] Image happinessMeter, productivityMeter;
 
         public void Refresh(GameManager game)
         {
-            var point = new Vector2(game.Stats.Happiness / 100, game.Stats.Productivity / 100);
-            marker.anchorMin = marker.anchorMax = point;
-            marker.anchoredPosition = Vector2.zero;
-            bool happy = game.Stats.Happiness >= 50;
-            bool productive = game.Stats.Productivity >= 50;
-            string quadrant;
-            if (happy && productive) quadrant = "Equilibrio positivo";
-            else if (happy) quadrant = "Feliz / improductivo";
-            else if (productive) quadrant = "Productivo / infeliz";
-            else quadrant = "Crisis";
-            valuesLabel.text = $"FELICIDAD {game.Stats.Happiness:0} / 100     PRODUCTIVIDAD {game.Stats.Productivity:0} / 100";
-            stateLabel.text = quadrant;
-            messageLabel.text = game.Tasks.Message;
+            happinessMeter.color = GetMeterColor(game.Stats.Happiness);
+            productivityMeter.color = GetMeterColor(game.Stats.Productivity);
+        }
+
+        static Color GetMeterColor(float value)
+        {
+            float distance = Mathf.Clamp01(Mathf.Abs(value - 50f) / 50f);
+            Color target = value >= 50f
+                ? new Color(0.2f, 0.95f, 0.25f, 1f)
+                : new Color(1f, 0.2f, 0.2f, 1f);
+            return Color.Lerp(Color.white, target, distance);
         }
     }
 }

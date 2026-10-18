@@ -7,9 +7,11 @@ public class WireConnectionMinigame : TimedMinigame
     [SerializeField] private Image[] cables;
     [SerializeField] private Image[] connectors;
     [SerializeField] private Image[] connectionLines;
+    [SerializeField] private Sprite[] leftCableSprites;
+    [SerializeField] private Sprite[] rightConnectorSprites;
     [SerializeField] private Text phaseText;
 
-    private readonly Color[] colors = { new Color(.91f, .32f, .29f), new Color(.27f, .69f, .48f), new Color(.30f, .55f, .88f) };
+    private static readonly Color[] colors = { new Color(.91f, .32f, .29f), new Color(.27f, .69f, .48f), new Color(.30f, .55f, .88f) };
     private int[] connectorColors;
     private bool[] connected;
     private int selected;
@@ -26,8 +28,12 @@ public class WireConnectionMinigame : TimedMinigame
         connected = new bool[3];
         for (int i = 0; i < 3; i++)
         {
-            cables[i].color = colors[i];
-            connectors[i].color = colors[connectorColors[i]];
+            if (leftCableSprites != null && i < leftCableSprites.Length)
+                cables[i].sprite = leftCableSprites[i];
+            if (rightConnectorSprites != null && connectorColors[i] < rightConnectorSprites.Length)
+                connectors[i].sprite = rightConnectorSprites[connectorColors[i]];
+            cables[i].color = Color.white;
+            connectors[i].color = Color.white;
             connectionLines[i].gameObject.SetActive(false);
             cables[i].gameObject.SetActive(true);
             connectors[i].gameObject.SetActive(true);
@@ -64,8 +70,6 @@ public class WireConnectionMinigame : TimedMinigame
             }
             else
             {
-                selectedCable = -1;
-                selected = 0;
                 AddError("Conector equivocado.");
             }
         }
@@ -93,5 +97,8 @@ public class WireConnectionMinigame : TimedMinigame
             cables[i].transform.localScale = selectedCable < 0 && i == selected && !connected[i] ? Vector3.one * 1.12f : Vector3.one;
         for (int i = 0; i < connectors.Length; i++)
             connectors[i].transform.localScale = selectedCable >= 0 && i == selected ? Vector3.one * 1.12f : Vector3.one;
+        Highlight(selectedCable < 0
+            ? cables[Mathf.Clamp(selected, 0, cables.Length - 1)]
+            : connectors[Mathf.Clamp(selected, 0, connectors.Length - 1)]);
     }
 }
