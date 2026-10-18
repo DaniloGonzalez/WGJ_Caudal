@@ -18,6 +18,8 @@ namespace Caudal.Editor
         const string ResultKey = "Caudal.SixMinigames.Result";
         static Keyboard keyboard;
         static Canvas canvas;
+        static GameManager gameManager;
+        static bool gameManagerWasEnabled;
 
         static readonly string[] PrefabPaths =
         {
@@ -63,10 +65,12 @@ namespace Caudal.Editor
             {
                 Application.runInBackground = true;
                 canvas = UnityEngine.Object.FindAnyObjectByType<Canvas>();
-                var game = UnityEngine.Object.FindAnyObjectByType<GameManager>();
-                if (canvas == null || game == null || game.Input == null)
+                gameManager = UnityEngine.Object.FindAnyObjectByType<GameManager>();
+                gameManagerWasEnabled = gameManager != null && gameManager.enabled;
+                if (canvas == null || gameManager == null || gameManager.Input == null)
                     throw new Exception("Faltan Canvas, GameManager o InputRouter.");
-                typeof(GameManager).GetProperty("State").GetSetMethod(true).Invoke(game, new object[] { GameState.DayStart });
+                gameManager.enabled = false;
+                typeof(GameManager).GetProperty("State").GetSetMethod(true).Invoke(gameManager, new object[] { GameState.DayStart });
                 keyboard = InputSystem.AddDevice<Keyboard>();
                 keyboard.MakeCurrent();
                 EditorApplication.update += KeepKeyboardCurrent;
@@ -79,7 +83,7 @@ namespace Caudal.Editor
                 }
                 await VerifyIndependentInput();
                 await VerifyPopupsTogether();
-                await VerifyTaskFlow(game);
+                await VerifyTaskFlow(gameManager);
 
                 string report = "CAUDAL_SIX_MINIGAMES_PASSED (" + Screen.width + "x" + Screen.height + "):\n" +
                     string.Join("\n", names) +
@@ -99,6 +103,8 @@ namespace Caudal.Editor
                 EditorApplication.update -= KeepKeyboardCurrent;
                 if (keyboard != null && keyboard.added) InputSystem.RemoveDevice(keyboard);
                 keyboard = null;
+                if (gameManager != null) gameManager.enabled = gameManagerWasEnabled;
+                gameManager = null;
                 Application.runInBackground = oldBackground;
                 EditorApplication.isPlaying = false;
             }
