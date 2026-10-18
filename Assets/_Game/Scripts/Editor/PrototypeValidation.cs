@@ -116,7 +116,7 @@ namespace Caudal.Editor
                 game.Initialize(stats, days, tasks, input);
                 ValidateCharacters(game);
                 StartSelectedGame(game);
-                Check(tasks.Tasks.Count == 6, "Daily catalog");
+                Check(tasks.Tasks.Count == 3, "Daily catalog contains only minigame-linked tasks");
                 var ids = new System.Collections.Generic.HashSet<string>();
                 foreach (var task in tasks.Tasks)
                     Check(ids.Add(task.Data.taskId), "Duplicate task");

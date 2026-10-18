@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -61,18 +60,6 @@ namespace Caudal.Editor
             if (!condition) throw new Exception(message);
         }
 
-        static void Capture(string role)
-        {
-            var type = Type.GetType("Unity.Pipeline.Editor.Commands.Capture.CaptureCommands, Unity.Pipeline.Editor");
-            if (type == null) return;
-            var result = type.GetMethod("CaptureGameView", BindingFlags.Public | BindingFlags.Static)
-                .Invoke(null, new object[] { Screen.width, Screen.height, null, null, false, 0, "screen" });
-            var base64 = (string)result.GetType().GetProperty("Base64").GetValue(result);
-            string directory = Path.Combine(Application.dataPath, "../Docs/UI-Verification");
-            Directory.CreateDirectory(directory);
-            File.WriteAllBytes(Path.Combine(directory, "minigame-window-" + role + "-" + Screen.width + "x" + Screen.height + ".png"), Convert.FromBase64String(base64));
-        }
-
         static async void Run()
         {
             var checks = new System.Collections.Generic.List<string>();
@@ -107,7 +94,6 @@ namespace Caudal.Editor
                 Check(bossRect.anchorMin.x == .5f && bossRect.anchorMax.x == 1 && bossTexts.Any(t => t.Contains("JEFE")),
                     "La ventana de asignación no está en la mitad del jefe.");
                 checks.Add("La asignación abre una ventana del jefe en la mitad derecha");
-                Capture("boss");
                 Check(game.Tasks.Resolve(task.Id, task.Day, InteractionKind.Assignment, InteractionResult.Success), "No se pudo resolver la asignación de prueba.");
                 await Frames();
                 Check(Object.FindAnyObjectByType<PopUpController>() == null, "La ventana del jefe no se cerró al resolver la asignación.");
@@ -130,7 +116,6 @@ namespace Caudal.Editor
                 Check(popup.GetComponentsInChildren<Button>(true).Length == 1 && Object.FindAnyObjectByType<UnityEngine.EventSystems.EventSystem>() != null,
                     "El botón de cancelar o EventSystem no está disponible.");
                 checks.Add("Cancelar dispone de botón opcional y EventSystem");
-                Capture("worker");
 
                 popup.GetComponentsInChildren<Button>(true).Single().onClick.Invoke();
                 await Frames();
@@ -155,7 +140,6 @@ namespace Caudal.Editor
 
                 string report = "CAUDAL_MINIGAME_POPUP_PASSED (" + Screen.width + "x" + Screen.height + "):\n" + string.Join("\n", checks);
                 SessionState.SetString(ResultKey, report);
-                File.WriteAllText(Path.Combine(Application.dataPath, "../Docs/UI-Verification/minigame-window-play.txt"), report);
                 Debug.Log(report);
             }
             catch (Exception exception)

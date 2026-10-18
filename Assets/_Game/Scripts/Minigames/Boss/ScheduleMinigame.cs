@@ -7,6 +7,8 @@ public class ScheduleMinigame : TimedMinigame
     [SerializeField] private Image[] cards;
     [SerializeField] private Text[] cardLabels;
     [SerializeField] private Text[] slots;
+    [SerializeField] private Sprite[] prioritySprites;
+    [SerializeField] private Sprite slotSprite;
     [SerializeField] private Text phaseText;
 
     private int[] priorities;
@@ -25,9 +27,20 @@ public class ScheduleMinigame : TimedMinigame
         {
             cards[i].gameObject.SetActive(true);
             cardLabels[i].text = PriorityName(priorities[i]);
+            if (prioritySprites != null && priorities[i] < prioritySprites.Length)
+                cards[i].sprite = prioritySprites[priorities[i]];
+            cards[i].color = Color.white;
         }
         for (int i = 0; i < slots.Length; i++)
+        {
             slots[i].text = "ESPACIO " + (i + 1) + "\n—";
+            var image = slots[i].transform.parent.GetComponent<Image>();
+            if (image != null)
+            {
+                image.sprite = slotSprite;
+                image.color = Color.white;
+            }
+        }
         selected = 0;
         ShowSelection();
     }
@@ -70,6 +83,9 @@ public class ScheduleMinigame : TimedMinigame
             cards[i].transform.localScale = carriedCard < 0 && i == selected ? Vector3.one * 1.08f : Vector3.one;
         for (int i = 0; i < slots.Length; i++)
             slots[i].transform.parent.localScale = carriedCard >= 0 && i == selected ? Vector3.one * 1.06f : Vector3.one;
+        Highlight(carriedCard < 0
+            ? cards[Mathf.Clamp(selected, 0, cards.Length - 1)]
+            : slots[Mathf.Clamp(selected, 0, slots.Length - 1)].transform.parent.GetComponent<Image>());
     }
 
     private static string PriorityName(int priority) => priority == 0 ? "ALTA" : priority == 1 ? "MEDIA" : "BAJA";

@@ -6,6 +6,8 @@ public class EmailCleaningMinigame : TimedMinigame
 {
     [SerializeField] private Image[] cards;
     [SerializeField] private Text[] labels;
+    [SerializeField] private Sprite spamSprite;
+    [SerializeField] private Sprite importantSprite;
     [SerializeField] private Text progressText;
 
     private bool[] isSpam;
@@ -26,7 +28,8 @@ public class EmailCleaningMinigame : TimedMinigame
         {
             cards[i].gameObject.SetActive(true);
             labels[i].text = (isSpam[i] ? "SPAM" : "IMPORTANTE") + "\nCorreo " + (i + 1);
-            cards[i].color = isSpam[i] ? new Color(.65f, .28f, .25f) : new Color(.22f, .46f, .55f);
+            cards[i].sprite = isSpam[i] ? spamSprite : importantSprite;
+            cards[i].color = Color.white;
         }
         selected = 0;
         ShowSelection();
@@ -50,6 +53,7 @@ public class EmailCleaningMinigame : TimedMinigame
                 cards[selected].gameObject.SetActive(false);
                 removedSpam++;
                 SetFeedback("Spam eliminado.");
+                MoveSelectionToAvailableCard();
                 if (removedSpam == cards.Length / 2)
                     Finish(InteractionResult.Success);
             }
@@ -61,6 +65,23 @@ public class EmailCleaningMinigame : TimedMinigame
     {
         for (int i = 0; i < cards.Length; i++)
             cards[i].transform.localScale = cards[i].gameObject.activeSelf && i == selected ? Vector3.one * 1.08f : Vector3.one;
+        if (selected >= 0 && selected < cards.Length && cards[selected].gameObject.activeSelf)
+            Highlight(cards[selected]);
+        else
+            Highlight(null);
         if (progressText != null) progressText.text = "Spam eliminado: " + removedSpam + " / " + (cards.Length / 2);
+    }
+
+    private void MoveSelectionToAvailableCard()
+    {
+        for (int offset = 1; offset <= cards.Length; offset++)
+        {
+            int candidate = (selected + offset) % cards.Length;
+            if (cards[candidate].gameObject.activeSelf)
+            {
+                selected = candidate;
+                return;
+            }
+        }
     }
 }

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
 using UnityEditor;
@@ -89,8 +88,6 @@ namespace Caudal.Editor
                     string.Join("\n", names) +
                     "\nÉxito y fracaso comprobados por mecánica.\nLos dos minijuegos completaron en popups simultáneos.\nTaskManager asignó y aceptó la tarea con los prefabs por rol.";
                 SessionState.SetString(ResultKey, report);
-                string path = Path.Combine(Application.dataPath, "../Docs/UI-Verification/six-minigames-play.txt");
-                File.WriteAllText(path, report);
                 Debug.Log(report);
             }
             catch (Exception exception)
@@ -184,7 +181,9 @@ namespace Caudal.Editor
 
             string detail = index == 4
                 ? " selected=" + Field<int>(minigame, "selected") + " removed=" + Field<int>(minigame, "removedSpam") + " result=" + result
-                : " result=" + result;
+                : index == 2
+                    ? " request=" + Field<int>(minigame, "requestIndex") + " errors=" + Field<int>(minigame, "ErrorCount") + " decisions=" + string.Join(",", Field<bool[]>(minigame, "shouldApprove")) + " result=" + result
+                    : " result=" + result;
             Check(result == InteractionResult.Success, "No completó con éxito: " + path + detail);
             UnityEngine.Object.Destroy(instance);
             await Frames();
@@ -212,8 +211,11 @@ namespace Caudal.Editor
             else if (index == 2)
             {
                 bool[] approvals = Field<bool[]>(minigame, "shouldApprove");
-                if (approvals[0]) await Press(Key.DownArrow);
-                for (int i = 0; i < 3; i++) await Press(Key.Enter);
+                for (int i = 0; i < 3; i++)
+                {
+                    if (approvals[i]) await Press(Key.DownArrow);
+                    await Press(Key.Enter);
+                }
             }
             else if (index == 3)
             {
@@ -250,7 +252,10 @@ namespace Caudal.Editor
                 await Frames();
             }
 
-            Check(result == InteractionResult.Failure, "No produjo fracaso: " + path);
+            string failureDetail = index == 2
+                ? " request=" + Field<int>(minigame, "requestIndex") + " errors=" + Field<int>(minigame, "ErrorCount") + " result=" + result
+                : " result=" + result;
+            Check(result == InteractionResult.Failure, "No produjo fracaso: " + path + failureDetail);
             UnityEngine.Object.Destroy(instance);
             await Frames();
         }
@@ -287,8 +292,8 @@ namespace Caudal.Editor
             var spawnedPopups = UnityEngine.Object.FindObjectsByType<PopUpController>();
             Check(spawnedPopups.Length == 2, "MinigameSpawner no mantuvo un popup por jugador.");
             var resolved = typeof(MinigameSpawner).GetMethod("HandleInteractionResolved", BindingFlags.Instance | BindingFlags.NonPublic);
-            resolved.Invoke(spawner, new object[] { bossTask, InteractionResult.Success });
-            resolved.Invoke(spawner, new object[] { workerTask, InteractionResult.Success });
+            resolved.Invoke(spawner, new object[] { bossTask, InteractionKind.Assignment, InteractionResult.Success });
+            resolved.Invoke(spawner, new object[] { workerTask, InteractionKind.Execution, InteractionResult.Success });
             await Frames();
 
             int bossResult = -1, workerResult = -1;
@@ -300,10 +305,15 @@ namespace Caudal.Editor
             workerPopup.Setup(workerTask, InteractionKind.Execution, informe.GetMinigamePrefab(InteractionKind.Execution), value => workerResult = (int)value);
             Check(bossObject.GetComponentInChildren<ApprovalMinigame>(true) != null && workerObject.GetComponentInChildren<CopierTimingMinigame>(true) != null,
                 "Cada rol no recibió su prefab específico dentro del popup.");
-            Check(((RectTransform)bossObject.transform).anchorMin.x == .5f && ((RectTransform)workerObject.transform).anchorMax.x == .5f,
-                "Los popups concurrentes no respetan su mitad de pantalla.");
+            var bossRect = (RectTransform)bossObject.transform;
+            var workerRect = (RectTransform)workerObject.transform;
+            var canvasRect = canvas.transform as RectTransform;
+            bool portraitCanvas = canvasRect.rect.width < canvasRect.rect.height;
+            bool roleAreasMatch = portraitCanvas
+                ? Mathf.Approximately(bossRect.anchorMin.y, .52f) && Mathf.Approximately(workerRect.anchorMin.y, .03f)
+                : Mathf.Approximately(bossRect.anchorMin.x, .665f) && Mathf.Approximately(workerRect.anchorMin.x, .665f);
+            Check(roleAreasMatch, "Los popups concurrentes no respetan la zona asignada a cada rol.");
             await Frames(2);
-            Capture("six-minigames-both-roles");
 
             var approval = bossObject.GetComponentInChildren<ApprovalMinigame>(true);
             bool[] decisions = Field<bool[]>(approval, "shouldApprove");
@@ -324,18 +334,6 @@ namespace Caudal.Editor
             await Frames(3);
             Check(bossObject == null && workerObject == null,
                 "Alguno de los popups no cerró al resolver el minijuego.");
-        }
-
-        static void Capture(string name)
-        {
-            var type = Type.GetType("Unity.Pipeline.Editor.Commands.Capture.CaptureCommands, Unity.Pipeline.Editor");
-            if (type == null) return;
-            var result = type.GetMethod("CaptureGameView", BindingFlags.Public | BindingFlags.Static)
-                .Invoke(null, new object[] { Screen.width, Screen.height, null, null, false, 0, "screen" });
-            string base64 = (string)result.GetType().GetProperty("Base64").GetValue(result);
-            string directory = Path.Combine(Application.dataPath, "../Docs/UI-Verification");
-            Directory.CreateDirectory(directory);
-            File.WriteAllBytes(Path.Combine(directory, name + "-" + Screen.width + "x" + Screen.height + ".png"), Convert.FromBase64String(base64));
         }
 
         static async Task VerifyTaskFlow(GameManager game)

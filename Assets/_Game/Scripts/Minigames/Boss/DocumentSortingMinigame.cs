@@ -7,10 +7,11 @@ public class DocumentSortingMinigame : TimedMinigame
 {
     [SerializeField] private Image[] documents;
     [SerializeField] private Image[] trays;
+    [SerializeField] private Sprite[] documentSprites;
+    [SerializeField] private Sprite[] traySprites;
     [SerializeField] private Text phaseText;
 
     private readonly List<int> remainingDocuments = new List<int>();
-    private readonly Color[] colors = { new Color(.91f, .32f, .29f), new Color(.27f, .69f, .48f), new Color(.30f, .55f, .88f) };
     private int[] documentColors;
     private int selected;
     private int carriedDocument = -1;
@@ -23,11 +24,17 @@ public class DocumentSortingMinigame : TimedMinigame
         for (int i = 0; i < documents.Length; i++)
         {
             remainingDocuments.Add(i);
-            documents[i].color = colors[documentColors[i]];
+            if (documentSprites != null && documentColors[i] < documentSprites.Length)
+                documents[i].sprite = documentSprites[documentColors[i]];
+            documents[i].color = Color.white;
             documents[i].gameObject.SetActive(true);
         }
         for (int i = 0; i < trays.Length; i++)
-            trays[i].color = colors[i];
+        {
+            if (traySprites != null && i < traySprites.Length)
+                trays[i].sprite = traySprites[i];
+            trays[i].color = Color.white;
+        }
         selected = 0;
         ShowSelection();
     }
@@ -56,7 +63,6 @@ public class DocumentSortingMinigame : TimedMinigame
             }
             else
             {
-                carriedDocument = -1;
                 selected = 0;
                 AddError("Bandeja equivocada.");
             }
@@ -75,6 +81,10 @@ public class DocumentSortingMinigame : TimedMinigame
         }
         for (int i = 0; i < trays.Length; i++)
             trays[i].transform.localScale = carriedDocument >= 0 && i == selected ? Vector3.one * 1.08f : Vector3.one;
+
+        Highlight(carriedDocument < 0
+            ? remainingDocuments.Count > 0 ? documents[remainingDocuments[Mathf.Clamp(selected, 0, remainingDocuments.Count - 1)]] : null
+            : trays[Mathf.Clamp(selected, 0, trays.Length - 1)]);
     }
 
     private static void Shuffle(int[] values)

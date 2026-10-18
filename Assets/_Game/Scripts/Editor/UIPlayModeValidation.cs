@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -90,20 +89,6 @@ namespace Caudal.Editor
         static T Find<T>() where T : Object =>
             Object.FindAnyObjectByType<T>(FindObjectsInactive.Include);
 
-        static void Capture(string name)
-        {
-            // Reutiliza la misma captura de Game View que expone Unity MCP.
-            var type = Type.GetType("Unity.Pipeline.Editor.Commands.Capture.CaptureCommands, Unity.Pipeline.Editor");
-            if (type == null) throw new Exception("Unity Pipeline capture tool unavailable.");
-            var result = type.GetMethod("CaptureGameView", BindingFlags.Public | BindingFlags.Static)
-                .Invoke(null, new object[] { Screen.width, Screen.height, null, null, false, 0, "screen" });
-            var png = (string)result.GetType().GetProperty("Base64").GetValue(result);
-            string directory = Path.Combine(Application.dataPath, "../Docs/UI-Verification");
-            Directory.CreateDirectory(directory);
-            File.WriteAllBytes(Path.Combine(directory, name + "-" + Screen.width + "x" + Screen.height + ".png"),
-                Convert.FromBase64String(png));
-        }
-
         static void ProfileVisible(CharacterCard card, CharacterData data)
         {
             Check(card.GetComponentsInChildren<RawImage>(true).Single().texture == data.portrait,
@@ -151,7 +136,6 @@ namespace Caudal.Editor
                 Check(Object.FindObjectsByType<Camera>(FindObjectsInactive.Include).Length == 1, "One camera in Play");
                 Check(Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include).Length == 1, "One Canvas in Play");
                 Check(canvas.transform.childCount == 7, "Seven panel instances, no duplicates");
-                Capture("intro");
                 double deadline = EditorApplication.timeSinceStartup + 10;
                 while (game.State == GameState.DayStart && EditorApplication.timeSinceStartup < deadline) await Frames();
                 await Frames();
@@ -175,7 +159,6 @@ namespace Caudal.Editor
                 await Press(game.Input.worker.confirm);
                 Check(game.WorkerReady && !game.BossReady && game.State == GameState.CharacterSelection, "Worker ready waits for boss");
                 Check(workerCard.transform.Find("Ready").gameObject.activeSelf, "Ready indicator visible");
-                Capture("selection-ready");
                 await Press(game.Input.worker.cancel);
                 Check(!game.WorkerReady, "Worker cancels readiness");
                 await Press(game.Input.boss.confirm);
@@ -197,7 +180,6 @@ namespace Caudal.Editor
                 Check(bossPopup != null && ((RectTransform)bossPopup.transform).anchorMin.x == .5f &&
                     bossPopup.GetComponentsInChildren<Text>(true).Any(t => t.text.Contains("JEFE")),
                     "Boss assignment minigame window opens on the right half");
-                Capture("minigame-boss-window");
                 await ResolveOrPress(game, first, InteractionKind.Assignment, InteractionResult.Success, game.Input.boss.confirm);
                 Check(game.Tasks.Pending == first, "Assignment simulator success");
                 Check(Find<PopUpController>() == null, "Boss assignment window closes after resolution");
@@ -212,7 +194,6 @@ namespace Caudal.Editor
                 Check(popupTexts.Any(t => t.Contains("TRABAJADOR: WASD")) &&
                     (hasWorkerMinigame ? minigameWindow.GetComponentInChildren<TimedMinigame>(true) != null : popupTexts.Any(t => t.Contains("MINIJUEGO EN PREPARACIÓN"))),
                     "Minigame window shows role controls and playable content");
-                Capture("minigame-window");
                 await ResolveOrPress(game, first, InteractionKind.Execution, InteractionResult.Success, game.Input.worker.confirm);
                 Check(first.Status == Caudal.TaskStatus.Completed && game.Days.QuotaProgress > 0, "Execution simulator success and quota");
                 Check(Find<PopUpController>() == null, "Minigame window closes after its result resolves");
@@ -222,7 +203,6 @@ namespace Caudal.Editor
                     "Graph marker follows statistics");
                 Check(Find<SharedHUD>().transform.Find("Counters/Quota").GetComponent<Text>().text ==
                     $"CUOTA {game.Days.QuotaProgress:0}/{game.Days.QuotaTarget:0}", "Shared HUD shows actual quota");
-                Capture("gameplay");
 
                 // Pressure refusal can fail without forcing acceptance.
                 await SelectTask(game, 1);
@@ -255,20 +235,17 @@ namespace Caudal.Editor
                     game.Days.Tick(1000);
                     await Frames();
                     Check(game.State == GameState.DaySummary && Find<ResultsUI>().gameObject.activeSelf, "Day summary " + day);
-                    if (day == 1) Capture("day-summary");
                     await Press(game.Input.worker.confirm);
                     if (day < game.Days.TotalDays)
                         Check(game.State == GameState.Playing && game.Days.CurrentDay == day + 1, "Next day " + (day + 1));
                 }
                 Check(game.State == GameState.GameOver && Find<ResultsUI>().gameObject.activeSelf, "Final displayed");
-                Capture("final");
                 await Press(game.Input.boss.confirm);
                 Check(game.State == GameState.CharacterSelection && !game.WorkerReady && !game.BossReady, "Restart returns to independent selection");
                 Check(game.Stats.Happiness == 50 && game.Stats.Productivity == 50 && game.Days.CurrentDay == 0, "Restart resets game values");
                 Check(canvas.GetComponentsInChildren<Transform>(true).Length == uiCount, "No UI duplicates after full cycle");
                 var report = "CAUDAL_UI_PLAY_PASSED (" + Screen.width + "x" + Screen.height + "):\n" + string.Join("\n", checks);
                 SessionState.SetString(Result, report);
-                File.WriteAllText(Path.Combine(Application.dataPath, "../Docs/UI-Verification/play-" + Screen.width + "x" + Screen.height + ".txt"), report);
                 Debug.Log(report);
             }
             catch (Exception exception)

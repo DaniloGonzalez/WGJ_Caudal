@@ -14,6 +14,7 @@ public abstract class TimedMinigame : MonoBehaviour, IMinigame
     [SerializeField] private Text errorsText;
     [SerializeField] private Text feedbackText;
     [SerializeField] private Image timerFill;
+    [SerializeField] private Image selectionOutline;
 
     private InputRouter input;
     private float remaining;
@@ -29,6 +30,14 @@ public abstract class TimedMinigame : MonoBehaviour, IMinigame
     protected virtual void OnEnable()
     {
         input = FindAnyObjectByType<InputRouter>();
+        if (selectionOutline == null)
+        {
+            var outlineTransform = transform.Find("SelectionOutline");
+            if (outlineTransform != null)
+                selectionOutline = outlineTransform.GetComponent<Image>();
+        }
+        if (selectionOutline != null)
+            selectionOutline.gameObject.SetActive(false);
         remaining = duration;
         errors = 0;
         finished = false;
@@ -93,6 +102,28 @@ public abstract class TimedMinigame : MonoBehaviour, IMinigame
     {
         if (feedbackText != null)
             feedbackText.text = message;
+    }
+
+    protected void Highlight(Image target)
+    {
+        if (selectionOutline == null)
+            return;
+
+        if (target == null)
+        {
+            selectionOutline.gameObject.SetActive(false);
+            return;
+        }
+
+        var outlineTransform = selectionOutline.rectTransform;
+        outlineTransform.SetParent(target.rectTransform, false);
+        outlineTransform.anchorMin = Vector2.zero;
+        outlineTransform.anchorMax = Vector2.one;
+        outlineTransform.offsetMin = new Vector2(-4, -4);
+        outlineTransform.offsetMax = new Vector2(4, 4);
+        outlineTransform.localRotation = Quaternion.identity;
+        outlineTransform.localScale = Vector3.one;
+        selectionOutline.gameObject.SetActive(true);
     }
 
     protected void Finish(InteractionResult result)

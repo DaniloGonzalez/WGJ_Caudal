@@ -7,8 +7,15 @@ namespace Caudal
     {
         [SerializeField] Text title, label, controls;
         [SerializeField] RawImage portrait;
+        [SerializeField] TaskCard assignedTaskCard;
         string dialogue;
         float dialogueUntil;
+
+        void Awake()
+        {
+            if (assignedTaskCard == null)
+                assignedTaskCard = GetComponentInChildren<TaskCard>(true);
+        }
 
         public void ShowDialogue(string text, float duration)
         {
@@ -24,6 +31,15 @@ namespace Caudal
             var keys = game.Input.worker;
             var active = game.Tasks.Active;
             var pending = game.Tasks.Pending;
+            var assigned = active ?? pending;
+            if (assignedTaskCard == null)
+                assignedTaskCard = GetComponentInChildren<TaskCard>(true);
+            if (assignedTaskCard != null)
+            {
+                assignedTaskCard.gameObject.SetActive(assigned != null);
+                if (assigned != null)
+                    assignedTaskCard.Refresh(assigned, false, false);
+            }
             controls.text = $"{keys.confirm}: aceptar · {keys.cancel}: rechazar";
             if (active != null)
             {
@@ -39,7 +55,10 @@ namespace Caudal
             else if (pending != null)
                 label.text = $"{pending.Data.taskName} · {(pending.Strategy == TaskStrategy.Pressure ? "PRESIÓN" : "NORMAL")}\n{pending.Data.description}";
             else
-                label.text = "Sin solicitudes pendientes\nPuedes decir que no. Cada decisión cuenta.";
+            {
+                label.text = "Sin solicitudes pendientes";
+                controls.text = string.Empty;
+            }
             if (Time.unscaledTime < dialogueUntil) controls.text = dialogue;
         }
 
