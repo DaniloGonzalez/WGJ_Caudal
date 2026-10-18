@@ -1,0 +1,54 @@
+CAUDAL_UI_PLAY_PASSED (1920x1080):
+Scene systems present
+Intro visible
+One camera in Play
+One Canvas in Play
+Seven panel instances, no duplicates
+Intro transitions to selection
+Selection clock stopped
+Character portrait: Ana
+Character name and biography: Ana
+Character portrait: Elena
+Character name and biography: Elena
+Character portrait: Bruno
+Character name and biography: Bruno
+Character portrait: Martín
+Character name and biography: Martín
+Character portrait: Camila
+Character name and biography: Camila
+Character portrait: Sofía
+Character name and biography: Sofía
+Three independent profiles per role using simultaneous input
+Worker ready waits for boss
+Ready indicator visible
+Worker cancels readiness
+Boss ready waits for worker
+Both confirmations start day one
+Gameplay panels visible
+Player loop and day clock advance
+Three task cards reused
+Assignment started with boss input
+Assignment simulator success
+Explicit acceptance with worker input
+Execution simulator success and quota
+Graph marker follows statistics
+Shared HUD shows actual quota
+Strategy input preserved
+Pressure refusal interaction
+Refusal failure preserves decision
+Execution simulator failure
+Rejection completed
+UI not rebuilt during interactions
+Day summary 1
+Next day 2
+Day summary 2
+Next day 3
+Day summary 3
+Next day 4
+Day summary 4
+Next day 5
+Day summary 5
+Final displayed
+Restart returns to independent selection
+Restart resets game values
+No UI duplicates after full cycle

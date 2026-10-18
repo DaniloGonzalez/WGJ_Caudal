@@ -20,7 +20,7 @@ Una pulsación inicia la interacción; una pulsación posterior resuelve el simu
 
 Selecciona **Game** en Main:
 
-- GameBootstrap: intro, cuatro texturas suministradas y referencias a sistemas.
+- GameBootstrap: intro, cámara, Canvas, paneles y referencias a sistemas en Main.
 - GameManager: simulador, penalización por cuota y umbrales de final.
 - StatsManager: estadísticas iniciales.
 - DayManager: cinco días, 90 segundos y cuota de 60 por defecto.
@@ -29,7 +29,7 @@ Selecciona **Game** en Main:
 
 Crea tareas con **Assets > Create > Caudal > Tarea**, guárdalas en `_Game/Data/Tasks` y agrégalas al catálogo de TaskManager. Asigna un taskId único. Cuota y productividad son recompensas separadas.
 
-La cámara y el Canvas se construyen al entrar en Play. La UI usa los cuatro PNG existentes de `Art/Sprites/placeholders_oficina_gamejam`; no se generó arte nuevo. La escena ya está incluida en Build Settings.
+La cámara y el Canvas `Game UI` están guardados en Main. Edita la interfaz en escena y en los prefabs de `Assets/_Game/Prefabs/UI`; consulta [UI-Prefabs](Docs/UI-Prefabs.md). La UI usa los cuatro PNG existentes de `Art/Sprites/placeholders_oficina_gamejam`; no se generó arte nuevo. La escena ya está incluida en Build Settings.
 
 ## Estructura
 

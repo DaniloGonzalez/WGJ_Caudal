@@ -100,7 +100,8 @@ namespace Caudal.Editor
         [MenuItem("Caudal/Validar lógica del prototipo")]
         public static void Run()
         {
-            var scene = EditorSceneManager.OpenScene("Assets/_Game/Scenes/Main.unity", OpenSceneMode.Additive);
+            // La copia de preview evita cerrar/modificar Main si ya está abierta.
+            var scene = EditorSceneManager.OpenPreviewScene("Assets/_Game/Scenes/Main.unity");
             try
             {
                 var go = scene.GetRootGameObjects()[0];
@@ -110,7 +111,7 @@ namespace Caudal.Editor
                 var tasks = go.GetComponent<TaskManager>();
                 var input = go.GetComponent<InputRouter>();
                 var bootstrap = new SerializedObject(go.GetComponent<GameBootstrap>());
-                foreach (var field in new[] { "workerOffice", "bossOffice", "workerPortrait", "bossPortrait", "gameManager", "statsManager", "dayManager", "taskManager", "inputRouter" })
+                foreach (var field in new[] { "sceneCamera", "sceneCanvas", "screen", "intro", "gameManager", "statsManager", "dayManager", "taskManager", "inputRouter" })
                     Check(bootstrap.FindProperty(field).objectReferenceValue != null, "Missing scene reference: " + field);
                 game.Initialize(stats, days, tasks, input);
                 ValidateCharacters(game);
@@ -169,19 +170,15 @@ namespace Caudal.Editor
                 Check(game.State == GameState.GameOver && game.ResultText.Length > 0, "Ending");
                 StartSelectedGame(game);
                 Check(days.CurrentDay == 1 && days.QuotaProgress == 0 && stats.Happiness == 50 && stats.Productivity == 50, "Restart");
-                var canvas = new GameObject("Validation Canvas", typeof(Canvas));
-                UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(canvas, scene);
-                GameScreen.Build(canvas.transform, game, (Texture)bootstrap.FindProperty("workerOffice").objectReferenceValue, (Texture)bootstrap.FindProperty("bossOffice").objectReferenceValue, (Texture)bootstrap.FindProperty("workerPortrait").objectReferenceValue, (Texture)bootstrap.FindProperty("bossPortrait").objectReferenceValue);
+                var canvas = (Canvas)bootstrap.FindProperty("sceneCanvas").objectReferenceValue;
+                var screen = (GameScreen)bootstrap.FindProperty("screen").objectReferenceValue;
+                screen.Initialize(game);
                 Check(canvas.GetComponentsInChildren<UnityEngine.UI.RawImage>(true).Length == 6, "Four supplied placeholders and two character previews");
-                foreach (var component in canvas.GetComponentsInChildren<MonoBehaviour>(true))
-                {
-                    var method = component.GetType().GetMethod("LateUpdate", BindingFlags.Instance | BindingFlags.NonPublic);
-                    if (method != null)
-                        method.Invoke(component, null);
-                }
+                screen.Refresh();
+                UIPrefabValidation.CheckScene(scene);
                 Debug.Log("CAUDAL_VALIDATION_PASSED: scene references, catalog, concurrency, decisions, rewards, expiry, five days, restart and UI.");
             }
-            finally { EditorSceneManager.CloseScene(scene, true); }
+            finally { EditorSceneManager.ClosePreviewScene(scene); }
         }
     }
 }

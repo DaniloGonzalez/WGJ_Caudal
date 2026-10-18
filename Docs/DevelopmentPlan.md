@@ -41,6 +41,14 @@ Implementación del plan aprobado, 17-10-2026. Una escena `Main`, estructura `_G
 - Reiniciar restablece estadísticas, días y cuota; los identificadores de instancia siguen siendo únicos para rechazar resultados de partidas anteriores.
 - El simulador está habilitado en GameManager y claramente rotulado. No sustituye la integración pendiente de minijuegos.
 
+## Migración de UI a prefabs
+
+La UI de `Main` está montada con nueve prefabs editables en `Assets/_Game/Prefabs/UI`. `GameBootstrap` conecta el Canvas, cámara e intro de la escena; `GameScreen` controla la visibilidad por estado; HUD, selección y tarjetas reciben referencias SerializeField. La lista del jefe reutiliza las filas `TaskCard`. `PopUp` y el contrato de minijuegos se conservan; el nombre `Game UI` sigue siendo el punto de montaje de `MinigameSpawner`.
+
+Unity 6000.7.0b5 compiló tras añadir `Unity.Pipeline.Attributes` a la referencia local de caché de Render Pipelines Core 17.7.0. No se cambiaron versiones de paquetes. Si se regenera Library, `Tools/Fix-UnityPipelineReference.ps1` vuelve a añadir la referencia. Detalles y evidencia: [UI-Prefabs](UI-Prefabs.md).
+
+La validación de escena, reglas y ciclo completo de Play pasó a 1280 × 720 y 1920 × 1080. Las capturas de los estados principales en ambas resoluciones están en `Docs/UI-Verification`.
+
 ## Verificación manual restante
 
 1. Abrir Main y Play: intro, fondos/personajes, legibilidad en 1280x720 y 1920x1080.
