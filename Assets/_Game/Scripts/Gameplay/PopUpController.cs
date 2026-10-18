@@ -85,8 +85,8 @@ public class PopUpController : MonoBehaviour
     private static string GetControls(InteractionKind kind)
     {
         if (kind == InteractionKind.Assignment)
-            return "JEFE: Enter para resolver · Shift derecho para fallar o cancelar";
-        return "TRABAJADOR: F para resolver · G para fallar o cancelar";
+            return "JEFE: flechas para elegir · Enter para confirmar · Shift derecho para cancelar";
+        return "TRABAJADOR: WASD para elegir · F para confirmar · G para cancelar";
     }
 
     public void FinishMinigame(InteractionResult result)

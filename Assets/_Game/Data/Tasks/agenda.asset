@@ -3,16 +3,25 @@
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 259cff37689a49bea2fd0c111423d75a, type: 3}
   m_Name: agenda
   m_EditorClassIdentifier: 
   taskId: agenda
   taskName: Organizar agenda
-  description: Coordina los próximos compromisos.
+  description: "Coordina los pr\xF3ximos compromisos."
   difficulty: 1
   happinessCost: 3
   productivityReward: 4
   quotaReward: 13
-  assignmentTimeLimit: 10
-  executionTimeLimit: 20
+  assignmentTimeLimit: 12
+  executionTimeLimit: 10
   requiresRefusalMinigame: 0
+  bossMinigamePrefab: {fileID: 4455939194836957118, guid: 7bd0a91d0bf59c644ba1a3f63b793b51, type: 3}
+  workerMinigamePrefab: {fileID: 7737986671711358449, guid: 6bc5d4f29ef88f940b2c9f58c876d89c, type: 3}
+  minigamePrefab: {fileID: 0}

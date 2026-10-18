@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 using Caudal;
 
 public class MinigameSpawner : MonoBehaviour
@@ -10,7 +11,7 @@ public class MinigameSpawner : MonoBehaviour
     [SerializeField] private GameObject popupBasePrefab;
     [SerializeField] private GameObject fallbackMinigamePrefab;
 
-    private PopUpController currentPopup;
+    private readonly Dictionary<int, PopUpController> openPopups = new Dictionary<int, PopUpController>();
 
     private void OnEnable()
     {
@@ -28,15 +29,21 @@ public class MinigameSpawner : MonoBehaviour
             taskManager.OnInteractionStarted -= HandleInteractionStarted;
             taskManager.OnInteractionResolved -= HandleInteractionResolved;
         }
-        if (currentPopup != null)
+        foreach (var popup in openPopups.Values)
         {
-            currentPopup.ClosePopUp();
-            currentPopup = null;
+            if (popup != null)
+                popup.ClosePopUp();
         }
+        openPopups.Clear();
     }
 
     public void HandleInteractionStarted(TaskInstance task, InteractionKind kind) {
-        if (currentPopup != null) return;
+        if (task == null || task.Data == null)
+        {
+            Debug.LogError("MinigameSpawner: la interacción no tiene una tarea válida.", this);
+            return;
+        }
+        if (openPopups.ContainsKey(task.Id)) return;
         if (popupBasePrefab == null)
         {
             Debug.LogWarning("MinigameSpawner: falta asignar popupBasePrefab en el Inspector.");
@@ -50,18 +57,15 @@ public class MinigameSpawner : MonoBehaviour
             return;
         }
 
-        if (task == null || task.Data == null)
-        {
-            Debug.LogError("MinigameSpawner: la interacción no tiene una tarea válida.", this);
-            return;
-        }
-
-        GameObject prefabToSpawn = task.Data.minigamePrefab != null ? task.Data.minigamePrefab : fallbackMinigamePrefab;
+        GameObject prefabToSpawn = task.Data.GetMinigamePrefab(kind);
+        if (prefabToSpawn == null)
+            prefabToSpawn = fallbackMinigamePrefab;
 
         GameObject popupInstance = Instantiate(popupBasePrefab, canvasObj.transform, false);
 
-        if (popupInstance.TryGetComponent<PopUpController>(out currentPopup)) {
-            currentPopup.Setup(task, kind, prefabToSpawn, (result) =>
+        if (popupInstance.TryGetComponent<PopUpController>(out var popup)) {
+            openPopups.Add(task.Id, popup);
+            popup.Setup(task, kind, prefabToSpawn, (result) =>
             {
                 if (taskManager != null)
                     taskManager.Resolve(task.Id, task.Day, kind, result);
@@ -76,10 +80,11 @@ public class MinigameSpawner : MonoBehaviour
 
     private void HandleInteractionResolved(TaskInstance task, InteractionResult result)
     {
-        if (currentPopup != null)
+        if (task != null && openPopups.TryGetValue(task.Id, out var popup))
         {
-            currentPopup.ClosePopUp();
-            currentPopup = null;
+            if (popup != null)
+                popup.ClosePopUp();
+            openPopups.Remove(task.Id);
         }
     }
 

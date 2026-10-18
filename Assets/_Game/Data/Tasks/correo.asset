@@ -3,6 +3,12 @@
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 259cff37689a49bea2fd0c111423d75a, type: 3}
   m_Name: correo
   m_EditorClassIdentifier: 
@@ -14,5 +20,8 @@ MonoBehaviour:
   productivityReward: 5
   quotaReward: 15
   assignmentTimeLimit: 10
-  executionTimeLimit: 20
+  executionTimeLimit: 12
   requiresRefusalMinigame: 0
+  bossMinigamePrefab: {fileID: 3591686347956962850, guid: 97388d1330dd4b74e891eed58d5fd01c, type: 3}
+  workerMinigamePrefab: {fileID: 7984037844401703306, guid: f089265c3b64c784abe5c1dc93e803ea, type: 3}
+  minigamePrefab: {fileID: 0}

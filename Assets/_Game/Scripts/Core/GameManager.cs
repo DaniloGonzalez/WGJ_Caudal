@@ -202,7 +202,7 @@ namespace Caudal
 
         void Simulate(TaskInstance task, InteractionKind kind, RoleKeys keys)
         {
-            if (!developmentSimulator)
+            if (!developmentSimulator || task.Data.GetMinigamePrefab(kind) != null)
                 return;
 
             if (Input.Pressed(keys.confirm))

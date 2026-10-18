@@ -119,6 +119,17 @@ namespace Caudal.Editor
             while (game.Selected > index) await Press(game.Input.boss.up);
         }
 
+        static async Task ResolveOrPress(GameManager game, TaskInstance task, InteractionKind kind, InteractionResult result, Key key)
+        {
+            if (task.Data.GetMinigamePrefab(kind) != null)
+            {
+                Check(game.Tasks.Resolve(task.Id, task.Day, kind, result), "TaskManager accepted minigame result for " + task.Data.taskId);
+                await Frames();
+            }
+            else
+                await Press(key);
+        }
+
         static async void Run()
         {
             bool background = Application.runInBackground;
@@ -187,7 +198,7 @@ namespace Caudal.Editor
                     bossPopup.GetComponentsInChildren<Text>(true).Any(t => t.text.Contains("JEFE")),
                     "Boss assignment minigame window opens on the right half");
                 Capture("minigame-boss-window");
-                await Press(game.Input.boss.confirm);
+                await ResolveOrPress(game, first, InteractionKind.Assignment, InteractionResult.Success, game.Input.boss.confirm);
                 Check(game.Tasks.Pending == first, "Assignment simulator success");
                 Check(Find<PopUpController>() == null, "Boss assignment window closes after resolution");
                 await Press(game.Input.worker.confirm);
@@ -197,9 +208,12 @@ namespace Caudal.Editor
                     ((RectTransform)minigameWindow.transform).anchorMax.x == .5f, "Worker execution minigame window opens on the left half");
                 var popupTexts = minigameWindow.GetComponentsInChildren<Text>(true).Select(t => t.text).ToArray();
                 Check(popupTexts.Contains(first.Data.taskName) && popupTexts.Contains(first.Data.description), "Minigame window shows task title and description");
-                Check(popupTexts.Any(t => t.Contains("TRABAJADOR: F")) && popupTexts.Any(t => t.Contains("MINIJUEGO EN PREPARACIÓN")), "Minigame window shows role controls and content area");
+                bool hasWorkerMinigame = first.Data.GetMinigamePrefab(InteractionKind.Execution) != null;
+                Check(popupTexts.Any(t => t.Contains("TRABAJADOR: WASD")) &&
+                    (hasWorkerMinigame ? minigameWindow.GetComponentInChildren<TimedMinigame>(true) != null : popupTexts.Any(t => t.Contains("MINIJUEGO EN PREPARACIÓN"))),
+                    "Minigame window shows role controls and playable content");
                 Capture("minigame-window");
-                await Press(game.Input.worker.confirm);
+                await ResolveOrPress(game, first, InteractionKind.Execution, InteractionResult.Success, game.Input.worker.confirm);
                 Check(first.Status == Caudal.TaskStatus.Completed && game.Days.QuotaProgress > 0, "Execution simulator success and quota");
                 Check(Find<PopUpController>() == null, "Minigame window closes after its result resolves");
                 var graph = Find<StatsGraphUI>();
@@ -216,7 +230,7 @@ namespace Caudal.Editor
                 Check(game.Strategy == TaskStrategy.Pressure, "Strategy input preserved");
                 await Press(game.Input.boss.confirm);
                 var pressure = game.Tasks.Assigning;
-                await Press(game.Input.boss.confirm);
+                await ResolveOrPress(game, pressure, InteractionKind.Assignment, InteractionResult.Success, game.Input.boss.confirm);
                 await Press(game.Input.worker.cancel);
                 Check(game.Tasks.Pending == pressure && pressure.Refusing, "Pressure refusal interaction");
                 await Press(game.Input.worker.cancel);
@@ -228,9 +242,10 @@ namespace Caudal.Editor
                 await Press(game.Input.boss.alternate);
                 await Press(game.Input.boss.confirm);
                 var rejected = game.Tasks.Assigning;
-                await Press(game.Input.boss.confirm);
+                await ResolveOrPress(game, rejected, InteractionKind.Assignment, InteractionResult.Success, game.Input.boss.confirm);
                 await Press(game.Input.worker.cancel);
-                if (rejected.Refusing) await Press(game.Input.worker.confirm);
+                if (rejected.Refusing)
+                    await ResolveOrPress(game, rejected, InteractionKind.Refusal, InteractionResult.Success, game.Input.worker.confirm);
                 Check(rejected.Status == Caudal.TaskStatus.Rejected, "Rejection completed");
                 Check(canvas.GetComponentsInChildren<Transform>(true).Length == uiCount, "UI not rebuilt during interactions");
 

@@ -122,7 +122,10 @@ namespace Caudal.Editor
                 var texts = popup.GetComponentsInChildren<Text>(true).Select(t => t.text).ToArray();
                 Check(texts.Contains(task.Data.taskName) && texts.Contains(task.Data.description), "La ventana no muestra nombre y descripción.");
                 checks.Add("La ventana presenta título y descripción de TaskData");
-                Check(texts.Any(t => t.Contains("TRABAJADOR: F")) && texts.Any(t => t.Contains("MINIJUEGO EN PREPARACIÓN")), "La ventana no presenta controles o el área vacía.");
+                bool hasMinigame = task.Data.GetMinigamePrefab(InteractionKind.Execution) != null;
+                Check(texts.Any(t => t.Contains("TRABAJADOR: WASD")) &&
+                    (hasMinigame ? popup.GetComponentInChildren<TimedMinigame>(true) != null : texts.Any(t => t.Contains("MINIJUEGO EN PREPARACIÓN"))),
+                    "La ventana no presenta controles o contenido.");
                 checks.Add("La ventana muestra rol, controles y área de minijuego");
                 Check(popup.GetComponentsInChildren<Button>(true).Length == 1 && Object.FindAnyObjectByType<UnityEngine.EventSystems.EventSystem>() != null,
                     "El botón de cancelar o EventSystem no está disponible.");

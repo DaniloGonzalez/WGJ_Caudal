@@ -12,6 +12,15 @@ namespace Caudal
         public bool requiresRefusalMinigame;
 
         [Header("Minijuego")]
+        public GameObject bossMinigamePrefab;
+        public GameObject workerMinigamePrefab;
+        [Tooltip("Referencia antigua, usada solo si no hay un prefab asignado al rol.")]
         public GameObject minigamePrefab;
+
+        public GameObject GetMinigamePrefab(InteractionKind kind)
+        {
+            GameObject rolePrefab = kind == InteractionKind.Assignment ? bossMinigamePrefab : workerMinigamePrefab;
+            return rolePrefab != null ? rolePrefab : minigamePrefab;
+        }
     }
 }
