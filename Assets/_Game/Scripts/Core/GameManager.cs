@@ -26,6 +26,7 @@ namespace Caudal
         public TaskStrategy Strategy { get; private set; }
         public bool Simulator => developmentSimulator;
         public string ResultText { get; private set; } = "";
+        public int CharacterCount(bool boss) => (boss ? bossCharacters : workerCharacters)?.Length ?? 0;
         public event System.Action<CharacterRole, string, float> OnDialogue;
         public void Initialize(StatsManager stats, DayManager days, TaskManager tasks, InputRouter input)
         {
@@ -97,8 +98,8 @@ namespace Caudal
                 CancelCharacter(boss);
                 return;
             }
-            if (Input.Pressed(keys.up)) SelectCharacter(boss, -1);
-            if (Input.Pressed(keys.down)) SelectCharacter(boss, 1);
+            if (Input.Pressed(keys.left)) SelectCharacter(boss, -1);
+            if (Input.Pressed(keys.right)) SelectCharacter(boss, 1);
             if (Input.Pressed(keys.confirm)) ConfirmCharacter(boss);
         }
 

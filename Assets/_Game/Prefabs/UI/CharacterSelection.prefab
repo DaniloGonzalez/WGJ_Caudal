@@ -68,18 +68,18 @@ MonoBehaviour:
       m_Calls: []
   m_FontData:
     m_Font: {fileID: 12800000, guid: 38c15e46d18f9420283718c7c6c0e5be, type: 3}
-    m_FontSize: 12
+    m_FontSize: 14
     m_FontStyle: 0
-    m_BestFit: 0
-    m_MinSize: 12
-    m_MaxSize: 12
+    m_BestFit: 1
+    m_MinSize: 11
+    m_MaxSize: 14
     m_Alignment: 4
     m_AlignByGeometry: 0
     m_RichText: 1
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: La jornada comienza cuando ambos confirman
+  m_Text: "ELIGE CON LAS TECLAS DE CADA TARJETA \xB7 AMBOS CONFIRMAN PARA INICIAR"
 --- !u!1 &6443644145088032325
 GameObject:
   m_ObjectHideFlags: 0
@@ -175,6 +175,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Caudal.CharacterSelectionUI
   workerCard: {fileID: 6476950523526060552}
   bossCard: {fileID: 5539004361461685558}
+  instructionsText: {fileID: 5310689267817066138}
 --- !u!1 &8744855751581344809
 GameObject:
   m_ObjectHideFlags: 0

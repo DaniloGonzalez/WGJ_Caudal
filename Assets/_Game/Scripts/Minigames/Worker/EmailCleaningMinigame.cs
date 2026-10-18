@@ -4,6 +4,7 @@ using UnityEngine.UI;
 
 public class EmailCleaningMinigame : TimedMinigame
 {
+    public override string ControlsHint => "W/A/S/D: mover · F: borrar spam · G: salir";
     [SerializeField] private Image[] cards;
     [SerializeField] private Text[] labels;
     [SerializeField] private Sprite spamSprite;

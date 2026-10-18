@@ -23,9 +23,11 @@ public abstract class TimedMinigame : MonoBehaviour, IMinigame
     private bool finished;
 
     public event Action<InteractionResult> OnFinished;
+    public virtual string ControlsHint => "Usa los controles de la pantalla · G: salir";
     protected int ErrorCount => errors;
     protected int ErrorLimit => errorLimit;
     protected float Remaining => remaining;
+    protected Text FeedbackLabel => feedbackText;
 
     protected virtual void OnEnable()
     {

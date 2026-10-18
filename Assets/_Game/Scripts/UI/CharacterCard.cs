@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 
 namespace Caudal
 {
@@ -7,9 +8,10 @@ namespace Caudal
     {
         [SerializeField] RawImage portrait;
         [SerializeField] Text roleLabel, nameLabel, biographyLabel, bonusesLabel, controlsLabel;
+        [SerializeField] Text previousArrow, nextArrow;
         [SerializeField] GameObject readyIndicator;
 
-        public void Refresh(CharacterData character, RoleKeys keys, bool ready, bool boss)
+        public void Refresh(CharacterData character, RoleKeys keys, bool ready, bool boss, bool canCycle)
         {
             roleLabel.text = boss ? "JEFE" : "TRABAJADOR";
             GameScreen.SetPortrait(portrait, character != null ? character.portrait : null);
@@ -20,8 +22,33 @@ namespace Caudal
                 : "";
             readyIndicator.SetActive(ready);
             controlsLabel.text = ready
-                ? $"{keys.cancel}: cambiar elección"
-                : $"{keys.up}/{keys.down}: elegir · {keys.confirm}: confirmar";
+                ? $"{FormatKey(keys.cancel)}: VOLVER A ELEGIR"
+                : $"{FormatKey(keys.left)} / {FormatKey(keys.right)} CAMBIAR · {FormatKey(keys.confirm)} ELEGIR";
+            controlsLabel.fontSize = 18;
+            controlsLabel.resizeTextForBestFit = true;
+            controlsLabel.resizeTextMinSize = 13;
+            controlsLabel.resizeTextMaxSize = 18;
+            controlsLabel.alignment = TextAnchor.MiddleCenter;
+            controlsLabel.horizontalOverflow = HorizontalWrapMode.Wrap;
+            controlsLabel.verticalOverflow = VerticalWrapMode.Truncate;
+            if (previousArrow != null) previousArrow.fontSize = 38;
+            if (nextArrow != null) nextArrow.fontSize = 38;
+            if (previousArrow != null) previousArrow.gameObject.SetActive(canCycle && !ready);
+            if (nextArrow != null) nextArrow.gameObject.SetActive(canCycle && !ready);
+        }
+
+        static string FormatKey(Key key)
+        {
+            switch (key)
+            {
+                case Key.LeftArrow: return "←";
+                case Key.RightArrow: return "→";
+                case Key.UpArrow: return "↑";
+                case Key.DownArrow: return "↓";
+                case Key.Enter: return "ENTER";
+                case Key.RightShift: return "SHIFT DER.";
+                default: return key.ToString().ToUpperInvariant();
+            }
         }
     }
 }

@@ -11,11 +11,11 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9ea734597ddb4b2e99df98de20128638, type: 3}
   m_Name: boss_martin
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   role: 1
   characterName: Josefa
   portrait: {fileID: 2800000, guid: 4b433e5ba746d40518a72e82c1d81d3b, type: 3}
-  speechClip: {fileID: 0}
+  speechClip: {fileID: 8300000, guid: 3efc50f1f74c64a08ab08d69e58c9be1, type: 3}
   dialogueLines:
   - trigger: 1
     text: "\xA1Otro d\xEDa en la oficina!\n"

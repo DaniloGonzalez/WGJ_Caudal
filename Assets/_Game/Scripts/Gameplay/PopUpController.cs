@@ -55,8 +55,8 @@ public class PopUpController : MonoBehaviour
                 float aspect = panel.sprite != null
                     ? panel.sprite.rect.width / panel.sprite.rect.height
                     : 410f / 250f;
-                float availableWidth = Mathf.Max(1, rootRect.rect.width * .95f);
-                float availableHeight = Mathf.Max(1, rootRect.rect.height * .88f);
+                float availableWidth = Mathf.Max(1, rootRect.rect.width * .98f);
+                float availableHeight = Mathf.Max(1, rootRect.rect.height * .96f);
                 float windowHeight = Mathf.Min(400f, availableHeight, availableWidth / aspect);
                 windowRect.sizeDelta = new Vector2(windowHeight * aspect, windowHeight);
                 panel.color = panel.sprite == null
@@ -90,6 +90,9 @@ public class PopUpController : MonoBehaviour
                 Debug.LogWarning("PopUpController: el prefab asignado no implementa IMinigame en su objeto raíz.", activeMinigameInstance);
         }
         if (placeholderContent != null) placeholderContent.SetActive(!hasMinigame);
+
+        if (controlsText != null && hasMinigame && activeMinigame != null)
+            controlsText.text = activeMinigame.ControlsHint;
 
         ConfigureCompactLayout(hasMinigame);
 
@@ -130,21 +133,40 @@ public class PopUpController : MonoBehaviour
 
         if (hasMinigame)
         {
-            // Los mockups ya incluyen sus instrucciones y su HUD dentro del juego.
-            // Dejamos el título del popup y el área de juego como contenido principal.
+            // Deja una línea de ayuda debajo del área jugable para mantener los controles visibles.
             if (taskDescriptionText != null) taskDescriptionText.gameObject.SetActive(false);
             if (roleText != null) roleText.gameObject.SetActive(false);
             if (timerText != null) timerText.gameObject.SetActive(false);
             if (timerFill != null) timerFill.gameObject.SetActive(false);
-            if (controlsText != null) controlsText.gameObject.SetActive(false);
+            if (controlsText != null) controlsText.gameObject.SetActive(true);
             if (closeButton != null) closeButton.gameObject.SetActive(false);
 
             if (window != null && minigameContainer != null)
             {
                 float headerHeight = header != null ? header.sizeDelta.y : 42f;
                 float width = Mathf.Max(1f, window.rect.width - 20f);
-                float height = Mathf.Max(1f, window.rect.height - headerHeight - 14f);
-                SetRect(minigameContainer, new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(0, -headerHeight * .5f - 2f), new Vector2(width, height));
+                bool detailedHint = activeMinigame.ControlsHint.Contains("\n");
+                float hintHeight = detailedHint ? 30f : 22f;
+                const float hintMargin = 10f;
+                const float gap = 5f;
+                float top = window.rect.height * .5f - headerHeight - 10f;
+                float bottom = -window.rect.height * .5f + hintMargin + hintHeight + gap;
+                float height = Mathf.Max(1f, top - bottom);
+                SetRect(minigameContainer, new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(0, (top + bottom) * .5f), new Vector2(width, height));
+                SetRect(controlsText != null ? controlsText.rectTransform : null, new Vector2(.5f, 0), new Vector2(.5f, 0), new Vector2(0, hintMargin + hintHeight * .5f), new Vector2(width, hintHeight));
+            }
+
+            if (controlsText != null)
+            {
+                bool detailedHint = activeMinigame.ControlsHint.Contains("\n");
+                controlsText.fontSize = detailedHint ? 10 : 12;
+                controlsText.resizeTextForBestFit = true;
+                controlsText.resizeTextMinSize = detailedHint ? 9 : 10;
+                controlsText.resizeTextMaxSize = detailedHint ? 10 : 12;
+                controlsText.color = new Color(.91f, .94f, .98f, 1f);
+                controlsText.alignment = TextAnchor.MiddleCenter;
+                controlsText.horizontalOverflow = HorizontalWrapMode.Wrap;
+                controlsText.verticalOverflow = VerticalWrapMode.Truncate;
             }
 
             if (placeholderContent != null)
@@ -235,8 +257,8 @@ public class PopUpController : MonoBehaviour
     }
 
     private static string GetCompactControls(InteractionKind kind) => kind == InteractionKind.Assignment
-        ? "Flechas + Enter: asignar"
-        : "WASD + F: responder · G: salir";
+        ? "Usa las flechas para elegir · Enter: confirmar"
+        : "Usa W / A / S / D para elegir · F: confirmar · G: salir";
 
     public void FinishMinigame(InteractionResult result)
     {

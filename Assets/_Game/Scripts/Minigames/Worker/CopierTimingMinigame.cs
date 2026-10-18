@@ -4,6 +4,7 @@ using UnityEngine.UI;
 
 public class CopierTimingMinigame : TimedMinigame
 {
+    public override string ControlsHint => "F: imprimir dentro del objetivo · G: salir";
     [SerializeField] private RectTransform track;
     [SerializeField] private RectTransform targetZone;
     [SerializeField] private RectTransform indicator;
@@ -67,8 +68,13 @@ public class CopierTimingMinigame : TimedMinigame
     private void UpdateIndicator()
     {
         if (track == null || indicator == null) return;
-        float halfWidth = track.rect.width * .5f;
-        indicator.anchoredPosition = new Vector2(-halfWidth + position * track.rect.width, indicator.anchoredPosition.y);
+
+        // Ancla el cursor al centro de la barra y limita su recorrido a su ancho útil.
+        indicator.anchorMin = new Vector2(.5f, indicator.anchorMin.y);
+        indicator.anchorMax = new Vector2(.5f, indicator.anchorMax.y);
+        float travelHalfWidth = Mathf.Max(0f, (track.rect.width - indicator.rect.width) * .5f);
+        float x = Mathf.Lerp(-travelHalfWidth, travelHalfWidth, position);
+        indicator.anchoredPosition = new Vector2(x, indicator.anchoredPosition.y);
     }
 
     private void ShowProgress()

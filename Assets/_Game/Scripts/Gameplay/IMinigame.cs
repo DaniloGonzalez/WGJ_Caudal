@@ -5,4 +5,5 @@ using Caudal;
 public interface IMinigame
 {
     event Action<InteractionResult> OnFinished;
+    string ControlsHint { get; }
 }

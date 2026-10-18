@@ -181,6 +181,10 @@ MonoBehaviour:
   dayManager: {fileID: 105}
   taskManager: {fileID: 106}
   inputRouter: {fileID: 107}
+  backgroundEffectsClip: {fileID: 8300000, guid: 8c154d26aa03947558d4cb942f94672a, type: 3}
+  backgroundMusicClip: {fileID: 8300000, guid: 490c78fb5609b480b98b466bbee20a64, type: 3}
+  backgroundEffectsVolume: 0.5
+  backgroundMusicVolume: 0.302
 --- !u!114 &103
 MonoBehaviour:
   m_ObjectHideFlags: 0

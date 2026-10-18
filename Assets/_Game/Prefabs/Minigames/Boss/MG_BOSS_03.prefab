@@ -643,7 +643,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ApprovalMinigame
   bossControls: 1
-  duration: 10
+  duration: 13
   difficulty: 1
   errorLimit: 3
   failOnErrorLimit: 1
