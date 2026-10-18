@@ -11,10 +11,12 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9ea734597ddb4b2e99df98de20128638, type: 3}
   m_Name: worker_ana
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   role: 0
   characterName: Cata
   portrait: {fileID: 2800000, guid: 06d00f94e475946ebb7963c2779f33ed, type: 3}
+  speechClip: {fileID: 8300000, guid: 742ca086ebf494a559be95a23432d51f, type: 3}
+  dialogueLines: []
   biography: "Cata es una secretaria con 30 a\xF1os de experiencia. Nunca falta, pero tampoco nunca se queda un minuto m\xE1s de su hora de salida. Es precisa. El terror de los \xFAtiles de oficina y los EPP (elementos de protecci\xF3n personal), no se pierde un l\xE1piz en la oficina sin que ella se entere."
   quotaBonusPercent: 20
   productivityBonusPercent: 0

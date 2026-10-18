@@ -11,10 +11,12 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9ea734597ddb4b2e99df98de20128638, type: 3}
   m_Name: worker_camila
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   role: 0
   characterName: "Tom\xE1s"
   portrait: {fileID: 2800000, guid: 06d00f94e475946ebb7963c2779f33ed, type: 3}
+  speechClip: {fileID: 8300000, guid: 742ca086ebf494a559be95a23432d51f, type: 3}
+  dialogueLines: []
   biography: "Tom\xE1s s\xF3lo quiere vivir una vida avanzando por el camino con la menor oposici\xF3n posible. No tiene grandes expectativas m\xE1s que vivir su d\xEDa a d\xEDa sin mucha confrontaci\xF3n. Lo \xFAnico que le importa, es no llegar taaaaaaaaaaaan tarde, para poder alimentar a su gatito."
   quotaBonusPercent: 0
   productivityBonusPercent: 0

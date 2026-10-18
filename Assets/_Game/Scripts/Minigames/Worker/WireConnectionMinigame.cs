@@ -4,6 +4,7 @@ using UnityEngine.UI;
 
 public class WireConnectionMinigame : TimedMinigame
 {
+    public override string ControlsHint => "W/S: arriba/abajo · A/D no se usan.\nF: elegir cable y unir colores iguales · G: salir.";
     [SerializeField] private Image[] cables;
     [SerializeField] private Image[] connectors;
     [SerializeField] private Image[] connectionLines;
@@ -38,21 +39,22 @@ public class WireConnectionMinigame : TimedMinigame
             cables[i].gameObject.SetActive(true);
             connectors[i].gameObject.SetActive(true);
         }
-        selected = 0;
+        selected = cables.Length - 1;
         ShowSelection();
     }
 
     protected override void ReadInput()
     {
         int count = selectedCable < 0 ? cables.Length : connectors.Length;
-        if (PressedUp) selected = Mathf.Max(0, selected - 1);
-        if (PressedDown) selected = Mathf.Min(count - 1, selected + 1);
+        // Los arreglos del prefab están serializados de abajo hacia arriba.
+        if (PressedUp) selected = Mathf.Min(count - 1, selected + 1);
+        if (PressedDown) selected = Mathf.Max(0, selected - 1);
         if (PressedConfirm)
         {
             if (selectedCable < 0)
             {
                 selectedCable = selected;
-                selected = 0;
+                selected = connectors.Length - 1;
                 SetFeedback("Elige el conector del mismo color.");
             }
             else if (!connected[selectedCable] && connectorColors[selected] == selectedCable)
@@ -62,7 +64,7 @@ public class WireConnectionMinigame : TimedMinigame
                 cables[selectedCable].transform.localScale = Vector3.one * .9f;
                 connectors[selected].transform.localScale = Vector3.one * .9f;
                 selectedCable = -1;
-                selected = 0;
+                selected = cables.Length - 1;
                 bool allConnected = true;
                 foreach (bool value in connected) allConnected &= value;
                 if (allConnected) Finish(InteractionResult.Success);
@@ -92,7 +94,7 @@ public class WireConnectionMinigame : TimedMinigame
     private void ShowSelection()
     {
         if (phaseText != null)
-            phaseText.text = selectedCable < 0 ? "W/S: cable  ·  F: seleccionar" : "W/S: conector  ·  F: unir";
+            phaseText.text = selectedCable < 0 ? "SELECCIONA UN CABLE" : "ELIGE SU CONECTOR";
         for (int i = 0; i < cables.Length; i++)
             cables[i].transform.localScale = selectedCable < 0 && i == selected && !connected[i] ? Vector3.one * 1.12f : Vector3.one;
         for (int i = 0; i < connectors.Length; i++)

@@ -6,6 +6,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.LowLevel;
+using UnityEngine.UI;
 using Unity.Scripting.LifecycleManagement;
 
 namespace Caudal.Editor
@@ -136,7 +137,7 @@ namespace Caudal.Editor
                     for (int slot = 0; slot < 3; slot++)
                     {
                         int card = Array.IndexOf(priorities, slot);
-                        for (int j = 0; j < card; j++) await Press(Key.DownArrow);
+                        await MoveScheduleCard((ScheduleMinigame)minigame, card);
                         await Press(Key.Enter);
                         for (int j = 0; j < slot; j++) await Press(Key.DownArrow);
                         await Press(Key.Enter);
@@ -146,7 +147,7 @@ namespace Caudal.Editor
                     bool[] approvals = Field<bool[]>(minigame, "shouldApprove");
                     for (int n = 0; n < 5; n++)
                     {
-                        if (!approvals[n]) await Press(Key.DownArrow);
+                        if (!approvals[n]) await Press(Key.LeftArrow);
                         await Press(Key.Enter);
                     }
                     break;
@@ -154,10 +155,10 @@ namespace Caudal.Editor
                     int[] connectorColors = Field<int[]>(minigame, "connectorColors");
                     for (int cable = 0; cable < 3; cable++)
                     {
-                        for (int j = 0; j < cable; j++) await Press(Key.S);
+                        await MoveWireSelection((WireConnectionMinigame)minigame, cable);
                         await Press(Key.F);
                         int connector = Array.IndexOf(connectorColors, cable);
-                        for (int j = 0; j < connector; j++) await Press(Key.S);
+                        await MoveWireSelection((WireConnectionMinigame)minigame, connector);
                         await Press(Key.F);
                     }
                     break;
@@ -213,20 +214,17 @@ namespace Caudal.Editor
                 bool[] approvals = Field<bool[]>(minigame, "shouldApprove");
                 for (int i = 0; i < 3; i++)
                 {
-                    if (approvals[i]) await Press(Key.DownArrow);
+                    if (approvals[i]) await Press(Key.LeftArrow);
                     await Press(Key.Enter);
                 }
             }
             else if (index == 3)
             {
                 int[] colors = Field<int[]>(minigame, "connectorColors");
-                int wrong = Array.FindIndex(colors, value => value != 0);
-                for (int i = 0; i < 3; i++)
-                {
-                    await Press(Key.F);
-                    for (int j = 0; j < wrong; j++) await Press(Key.S);
-                    await Press(Key.F);
-                }
+                await Press(Key.F);
+                int wrong = Array.FindIndex(colors, value => value != 2);
+                await MoveWireSelection((WireConnectionMinigame)minigame, wrong);
+                for (int i = 0; i < 3; i++) await Press(Key.F);
             }
             else if (index == 4)
             {
@@ -269,7 +267,7 @@ namespace Caudal.Editor
             int cable = Field<int>(worker.GetComponent<WireConnectionMinigame>(), "selectedCable");
             int request = Field<int>(boss.GetComponent<ApprovalMinigame>(), "requestIndex");
             int errors = Field<int>(boss.GetComponent<ApprovalMinigame>(), "ErrorCount");
-            Check(cable == 0 && (request > 0 || errors > 0), "Los controles simultáneos de ambos roles se interfirieron.");
+            Check(cable == 2 && (request > 0 || errors > 0), "Los controles simultáneos de ambos roles se interfirieron.");
             UnityEngine.Object.Destroy(boss);
             UnityEngine.Object.Destroy(worker);
             await Frames();
@@ -396,6 +394,30 @@ namespace Caudal.Editor
             int left = (currentColumn - targetColumn + 3) % 3;
             Key key = right <= left ? Key.D : Key.A;
             for (int i = 0; i < Mathf.Min(right, left); i++) await Press(key);
+        }
+
+        static async Task MoveScheduleCard(ScheduleMinigame game, int target)
+        {
+            Image[] cards = Field<Image[]>(game, "cards");
+            int selected = Field<int>(game, "selected");
+            var available = new List<int>();
+            for (int i = 0; i < cards.Length; i++)
+                if (cards[i] != null && cards[i].gameObject.activeSelf) available.Add(i);
+
+            int currentPosition = available.IndexOf(selected);
+            int targetPosition = available.IndexOf(target);
+            if (currentPosition < 0 || targetPosition < 0) return;
+            int down = (targetPosition - currentPosition + available.Count) % available.Count;
+            int up = (currentPosition - targetPosition + available.Count) % available.Count;
+            Key key = down <= up ? Key.DownArrow : Key.UpArrow;
+            for (int i = 0; i < Mathf.Min(down, up); i++) await Press(key);
+        }
+
+        static async Task MoveWireSelection(WireConnectionMinigame game, int target)
+        {
+            int current = Field<int>(game, "selected");
+            Key key = target > current ? Key.W : Key.S;
+            for (int i = 0; i < Mathf.Abs(target - current); i++) await Press(key);
         }
 
         static async Task Press(params Key[] keys)

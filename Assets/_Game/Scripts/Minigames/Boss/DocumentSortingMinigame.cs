@@ -5,6 +5,7 @@ using UnityEngine.UI;
 
 public class DocumentSortingMinigame : TimedMinigame
 {
+    public override string ControlsHint => "←/→: mover · Enter: recoger y clasificar";
     [SerializeField] private Image[] documents;
     [SerializeField] private Image[] trays;
     [SerializeField] private Sprite[] documentSprites;
@@ -41,8 +42,8 @@ public class DocumentSortingMinigame : TimedMinigame
 
     protected override void ReadInput()
     {
-        if (PressedUp) selected = Mathf.Max(0, selected - 1);
-        if (PressedDown) selected = Mathf.Min((carriedDocument < 0 ? remainingDocuments.Count : trays.Length) - 1, selected + 1);
+        if (PressedLeft) selected = Mathf.Max(0, selected - 1);
+        if (PressedRight) selected = Mathf.Min((carriedDocument < 0 ? remainingDocuments.Count : trays.Length) - 1, selected + 1);
         if (PressedConfirm)
         {
             if (carriedDocument < 0)
@@ -73,7 +74,7 @@ public class DocumentSortingMinigame : TimedMinigame
     private void ShowSelection()
     {
         if (phaseText != null)
-            phaseText.text = carriedDocument < 0 ? "W/S: documento  ·  Enter: recoger" : "W/S: bandeja  ·  Enter: depositar";
+            phaseText.text = carriedDocument < 0 ? "SELECCIONA UN DOCUMENTO" : "SELECCIONA UNA BANDEJA";
         for (int i = 0; i < documents.Length; i++)
         {
             bool isSelected = carriedDocument < 0 && remainingDocuments.IndexOf(i) == selected;

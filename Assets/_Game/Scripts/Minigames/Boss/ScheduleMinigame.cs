@@ -4,6 +4,7 @@ using UnityEngine.UI;
 
 public class ScheduleMinigame : TimedMinigame
 {
+    public override string ControlsHint => "↑/↓: mover · Enter: tomar y colocar";
     [SerializeField] private Image[] cards;
     [SerializeField] private Text[] cardLabels;
     [SerializeField] private Text[] slots;
@@ -47,13 +48,21 @@ public class ScheduleMinigame : TimedMinigame
 
     protected override void ReadInput()
     {
-        int count = carriedCard < 0 ? cards.Length : slots.Length;
-        if (PressedUp) selected = (selected + count - 1) % count;
-        if (PressedDown) selected = (selected + 1) % count;
+        int direction = PressedUp ? -1 : PressedDown ? 1 : 0;
+        if (direction != 0)
+        {
+            if (carriedCard < 0)
+                MoveToNextAvailableCard(direction);
+            else
+                selected = WrapIndex(selected + direction, slots.Length);
+        }
+
         if (PressedConfirm)
         {
             if (carriedCard < 0)
             {
+                if (!IsCardAvailable(selected)) selected = FindFirstAvailableCard();
+                if (selected < 0) return;
                 carriedCard = selected;
                 selected = 0;
                 SetFeedback("Elige el lugar según prioridad.");
@@ -62,12 +71,20 @@ public class ScheduleMinigame : TimedMinigame
             {
                 slots[selected].text = "ESPACIO " + (selected + 1) + "\n" + PriorityName(priorities[carriedCard]);
                 cards[carriedCard].gameObject.SetActive(false);
-                carriedCard = -1;
-                selected = 0;
                 bool allPlaced = true;
                 foreach (var card in cards) allPlaced &= !card.gameObject.activeSelf;
-                if (allPlaced) Finish(InteractionResult.Success);
-                else SetFeedback("Prioridad correcta.");
+                if (allPlaced)
+                {
+                    carriedCard = -1;
+                    selected = -1;
+                    Highlight(null);
+                    Finish(InteractionResult.Success);
+                    return;
+                }
+
+                carriedCard = -1;
+                selected = FindFirstAvailableCard();
+                SetFeedback("Prioridad correcta.");
             }
             else
                 AddError("Ese espacio no corresponde.");
@@ -78,14 +95,58 @@ public class ScheduleMinigame : TimedMinigame
     private void ShowSelection()
     {
         if (phaseText != null)
-            phaseText.text = carriedCard < 0 ? "W/S: tarjeta  ·  Enter: tomar" : "W/S: espacio  ·  Enter: colocar";
+            phaseText.text = carriedCard < 0 ? "SELECCIONA UNA TARJETA" : "ELIGE EL ESPACIO DE PRIORIDAD";
         for (int i = 0; i < cards.Length; i++)
-            cards[i].transform.localScale = carriedCard < 0 && i == selected ? Vector3.one * 1.08f : Vector3.one;
+            if (cards[i] != null)
+                cards[i].transform.localScale = carriedCard < 0 && cards[i].gameObject.activeSelf && i == selected ? Vector3.one * 1.08f : Vector3.one;
         for (int i = 0; i < slots.Length; i++)
-            slots[i].transform.parent.localScale = carriedCard >= 0 && i == selected ? Vector3.one * 1.06f : Vector3.one;
-        Highlight(carriedCard < 0
-            ? cards[Mathf.Clamp(selected, 0, cards.Length - 1)]
-            : slots[Mathf.Clamp(selected, 0, slots.Length - 1)].transform.parent.GetComponent<Image>());
+            if (slots[i] != null && slots[i].transform.parent != null)
+                slots[i].transform.parent.localScale = carriedCard >= 0 && i == selected ? Vector3.one * 1.06f : Vector3.one;
+
+        Image target = null;
+        if (carriedCard < 0)
+        {
+            if (IsCardAvailable(selected)) target = cards[selected];
+        }
+        else if (slots.Length > 0)
+        {
+            int slot = Mathf.Clamp(selected, 0, slots.Length - 1);
+            if (slots[slot] != null && slots[slot].transform.parent != null)
+                target = slots[slot].transform.parent.GetComponent<Image>();
+        }
+        Highlight(target);
+    }
+
+    private bool IsCardAvailable(int index)
+    {
+        return index >= 0 && index < cards.Length && cards[index] != null && cards[index].gameObject.activeSelf;
+    }
+
+    private int FindFirstAvailableCard()
+    {
+        for (int i = 0; i < cards.Length; i++)
+            if (IsCardAvailable(i)) return i;
+        return -1;
+    }
+
+    private void MoveToNextAvailableCard(int direction)
+    {
+        if (cards.Length == 0) return;
+        int index = selected;
+        for (int i = 0; i < cards.Length; i++)
+        {
+            index = WrapIndex(index + direction, cards.Length);
+            if (IsCardAvailable(index))
+            {
+                selected = index;
+                return;
+            }
+        }
+    }
+
+    private static int WrapIndex(int index, int count)
+    {
+        return count > 0 ? (index % count + count) % count : 0;
     }
 
     private static string PriorityName(int priority) => priority == 0 ? "ALTA" : priority == 1 ? "MEDIA" : "BAJA";
