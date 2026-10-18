@@ -19,6 +19,15 @@ namespace Caudal
         [SerializeField] DayManager dayManager;
         [SerializeField] TaskManager taskManager;
         [SerializeField] InputRouter inputRouter;
+        [Header("Audio de fondo")]
+        [SerializeField] AudioClip backgroundEffectsClip;
+        [SerializeField] AudioClip backgroundMusicClip;
+        [SerializeField, Range(0f, 1f)] float backgroundEffectsVolume = 0.5f;
+        [SerializeField, Range(0f, 1f)] float backgroundMusicVolume = 0.5f;
+
+        AudioSource backgroundEffectsSource;
+        AudioSource backgroundMusicSource;
+        bool backgroundAudioStarted;
 
         IEnumerator Start()
         {
@@ -41,6 +50,32 @@ namespace Caudal
             intro.Hide();
             gameManager.Restart();
             screen.Refresh();
+        }
+
+        void Update()
+        {
+            if (backgroundAudioStarted || gameManager == null || gameManager.State != GameState.Playing)
+                return;
+
+            backgroundAudioStarted = true;
+            PlayBackgroundLoop(backgroundEffectsClip, backgroundEffectsVolume, ref backgroundEffectsSource, "Background Effects");
+            PlayBackgroundLoop(backgroundMusicClip, backgroundMusicVolume, ref backgroundMusicSource, "Background Music");
+        }
+
+        void PlayBackgroundLoop(AudioClip clip, float volume, ref AudioSource source, string sourceName)
+        {
+            if (clip == null)
+                return;
+
+            var audioObject = new GameObject(sourceName);
+            audioObject.transform.SetParent(transform, false);
+            source = audioObject.AddComponent<AudioSource>();
+            source.clip = clip;
+            source.volume = Mathf.Clamp01(volume);
+            source.loop = true;
+            source.playOnAwake = false;
+            source.spatialBlend = 0f;
+            source.Play();
         }
     }
 }
