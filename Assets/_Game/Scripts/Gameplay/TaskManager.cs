@@ -11,6 +11,7 @@ namespace Caudal
         [SerializeField] float pressureRewardMultiplier = 1.5f;
         [SerializeField] float pressureStressMultiplier = 2;
         [SerializeField] float failureStress = 2;
+        [SerializeField, Min(2)] int backlogUrgencyThreshold = 2;
 
         readonly List<TaskInstance> tasks = new List<TaskInstance>();
         int nextId;
@@ -19,6 +20,7 @@ namespace Caudal
         float quotaMultiplier = 1;
         float productivityMultiplier = 1;
         float happinessCostMultiplier = 1;
+        bool backlogDialogueShown;
 
         public void SetCharacters(CharacterData worker, CharacterData boss)
         {
@@ -43,9 +45,31 @@ namespace Caudal
         public TaskInstance Pending { get; private set; }
         public TaskInstance Active { get; private set; }
         public string Message { get; private set; } = "";
+        public int UnresolvedCount
+        {
+            get
+            {
+                int count = 0;
+                foreach (var task in tasks)
+                    if (IsUnresolved(task)) count++;
+                return count;
+            }
+        }
+        public bool BacklogUrgent => UnresolvedCount >= backlogUrgencyThreshold;
+        public TaskInstance OldestUnresolvedTask
+        {
+            get
+            {
+                TaskInstance oldest = null;
+                foreach (var task in tasks)
+                    if (IsUnresolved(task) && (oldest == null || task.Id < oldest.Id)) oldest = task;
+                return oldest;
+            }
+        }
 
         public event Action<TaskInstance, InteractionKind> OnInteractionStarted;
-        public event Action<TaskInstance, InteractionResult> OnInteractionResolved;
+        public event Action<TaskInstance, InteractionKind, InteractionResult> OnInteractionResolved;
+        public event Action OnBacklogUrgencyReached;
 
         public void Initialize(StatsManager stats, DayManager days)
         {
@@ -59,6 +83,7 @@ namespace Caudal
             Pending = null;
             Active = null;
             tasks.Clear();
+            backlogDialogueShown = false;
             Message = "Selecciona una tarea para comenzar.";
 
             var available = new List<TaskData>();
@@ -96,6 +121,7 @@ namespace Caudal
             Assigning.Remaining = Assigning.Data.assignmentTimeLimit;
             Message = "Asignación en curso.";
             OnInteractionStarted?.Invoke(Assigning, InteractionKind.Assignment);
+            CheckBacklogUrgency();
             return true;
         }
 
@@ -112,6 +138,7 @@ namespace Caudal
 
             // Gatillar minijuego
             OnInteractionStarted?.Invoke(Active, InteractionKind.Execution);
+            CheckBacklogUrgency();
         }
 
         public void Reject()
@@ -132,6 +159,7 @@ namespace Caudal
             Pending.Status = TaskStatus.Rejected;
             Pending = null;
             Message = "Solicitud rechazada. Sin producción ni coste de felicidad.";
+            CheckBacklogUrgency();
         }
 
         // Entrada para el simulador y los futuros minijuegos.
@@ -173,7 +201,8 @@ namespace Caudal
             }
 
             // Notificar fin del minijuego
-            OnInteractionResolved?.Invoke(task, result);
+            OnInteractionResolved?.Invoke(task, kind, result);
+            CheckBacklogUrgency();
 
             return true;
         }
@@ -264,6 +293,23 @@ namespace Caudal
             Assigning = null;
             Pending = null;
             Active = null;
+            CheckBacklogUrgency();
+        }
+
+        static bool IsUnresolved(TaskInstance task) => task.Status == TaskStatus.Assigning ||
+            task.Status == TaskStatus.PendingResponse || task.Status == TaskStatus.Accepted || task.Status == TaskStatus.InProgress;
+
+        void CheckBacklogUrgency()
+        {
+            if (UnresolvedCount >= backlogUrgencyThreshold)
+            {
+                if (!backlogDialogueShown)
+                {
+                    backlogDialogueShown = true;
+                    OnBacklogUrgencyReached?.Invoke();
+                }
+            }
+            else backlogDialogueShown = false;
         }
 
         public int Count(TaskStatus status)

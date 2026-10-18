@@ -16,8 +16,21 @@ namespace Caudal
 
         public void Initialize(GameManager gameManager)
         {
+            if (game != null) game.OnDialogue -= HandleDialogue;
             game = gameManager;
+            game.OnDialogue += HandleDialogue;
             Refresh();
+        }
+
+        void OnDestroy()
+        {
+            if (game != null) game.OnDialogue -= HandleDialogue;
+        }
+
+        void HandleDialogue(CharacterRole role, string text, float duration)
+        {
+            if (role == CharacterRole.Boss) boss.ShowDialogue(text, duration);
+            else worker.ShowDialogue(text, duration);
         }
 
         void LateUpdate() => Refresh();

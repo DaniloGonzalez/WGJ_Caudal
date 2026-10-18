@@ -10,6 +10,8 @@ namespace Caudal
         public CharacterRole role;
         public string characterName;
         public Texture portrait;
+        [Tooltip("Clip opcional para acompañar diálogos de este rol.")]
+        public AudioClip speechClip;
         [TextArea(2, 5)] public string biography;
         [Min(0)] public float quotaBonusPercent;
         [Min(0)] public float productivityBonusPercent;

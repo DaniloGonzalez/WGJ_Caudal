@@ -16,6 +16,11 @@ namespace Caudal
     {
         Success, Failure, Cancelled
     }
+    public enum DialogueTrigger
+    {
+        BacklogUrgency, AssignmentSuccess, AssignmentFailure, ExecutionSuccess, ExecutionFailure,
+        RefusalSuccess, RefusalFailure, DayQuotaMet, DayQuotaMissed
+    }
     public sealed class TaskInstance
     {
         public readonly int Id, Day;

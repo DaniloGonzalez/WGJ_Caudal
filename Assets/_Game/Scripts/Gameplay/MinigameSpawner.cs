@@ -78,7 +78,7 @@ public class MinigameSpawner : MonoBehaviour
         }
     }
 
-    private void HandleInteractionResolved(TaskInstance task, InteractionResult result)
+    private void HandleInteractionResolved(TaskInstance task, InteractionKind kind, InteractionResult result)
     {
         if (task != null && openPopups.TryGetValue(task.Id, out var popup))
         {

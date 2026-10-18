@@ -7,6 +7,14 @@ namespace Caudal
     {
         [SerializeField] Text title, label, controls;
         [SerializeField] RawImage portrait;
+        string dialogue;
+        float dialogueUntil;
+
+        public void ShowDialogue(string text, float duration)
+        {
+            dialogue = text;
+            dialogueUntil = Time.unscaledTime + duration;
+        }
 
         public void Refresh(GameManager game)
         {
@@ -32,6 +40,7 @@ namespace Caudal
                 label.text = $"{pending.Data.taskName} · {(pending.Strategy == TaskStrategy.Pressure ? "PRESIÓN" : "NORMAL")}\n{pending.Data.description}";
             else
                 label.text = "Sin solicitudes pendientes\nPuedes decir que no. Cada decisión cuenta.";
+            if (Time.unscaledTime < dialogueUntil) controls.text = dialogue;
         }
 
         static string Simulation(GameManager game, RoleKeys keys) => game.Simulator

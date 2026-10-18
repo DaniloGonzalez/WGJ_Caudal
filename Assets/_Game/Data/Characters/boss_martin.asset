@@ -3,13 +3,19 @@
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9ea734597ddb4b2e99df98de20128638, type: 3}
   m_Name: boss_martin
   m_EditorClassIdentifier:
   role: 1
-  characterName: Martín
+  characterName: Josefa
   portrait: {fileID: 2800000, guid: 4b433e5ba746d40518a72e82c1d81d3b, type: 3}
-  biography: Ayuda al equipo a convertir los aciertos en mejoras de productividad.
+  biography: "Hija de una doctora y de un ingeniero. Josefa es la mayor de una familia de profesionales y se le nota. En c\xF3mo habla, c\xF3mo camina y se mueve. Precisa, correcta y emocionalmente estable. Josefa sabe bien c\xF3mo manejar un equipo y una empresa. "
   quotaBonusPercent: 0
   productivityBonusPercent: 15
   happinessCostReductionPercent: 0

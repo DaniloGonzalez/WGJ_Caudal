@@ -11,6 +11,9 @@ namespace Caudal
         [Min(1)] public float assignmentTimeLimit = 10, executionTimeLimit = 20;
         public bool requiresRefusalMinigame;
 
+        [Header("Presentación")]
+        public Sprite taskArtwork;
+
         [Header("Minijuego")]
         public GameObject bossMinigamePrefab;
         public GameObject workerMinigamePrefab;

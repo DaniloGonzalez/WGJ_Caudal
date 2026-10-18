@@ -11,6 +11,14 @@ namespace Caudal
         [SerializeField] RectTransform taskList;
         [SerializeField] TaskCard taskCardPrefab;
         [SerializeField] List<TaskCard> cards = new List<TaskCard>();
+        string dialogue;
+        float dialogueUntil;
+
+        public void ShowDialogue(string text, float duration)
+        {
+            dialogue = text;
+            dialogueUntil = Time.unscaledTime + duration;
+        }
 
         public void Refresh(GameManager game)
         {
@@ -30,6 +38,7 @@ namespace Caudal
                 controls.text = game.Tasks.Pending != null
                     ? "Solicitud pendiente: espera respuesta"
                     : $"{keys.up}/{keys.down}: seleccionar · {keys.confirm}: asignar";
+            if (Time.unscaledTime < dialogueUntil) controls.text = dialogue;
 
             // Tres filas reutilizadas, igual que la ventana del catálogo original.
             int start = Mathf.Max(0, game.Selected - 1);
@@ -39,7 +48,12 @@ namespace Caudal
             for (int i = 0; i < cards.Count; i++)
             {
                 cards[i].gameObject.SetActive(i < count);
-                if (i < count) cards[i].Refresh(game.Tasks.Tasks[start + i], start + i == game.Selected);
+                if (i < count)
+                {
+                    var task = game.Tasks.Tasks[start + i];
+                    bool urgent = game.Tasks.BacklogUrgent && task == game.Tasks.OldestUnresolvedTask;
+                    cards[i].Refresh(task, start + i == game.Selected, urgent);
+                }
             }
         }
     }

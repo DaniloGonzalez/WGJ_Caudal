@@ -1,6 +1,15 @@
 using UnityEngine;
 namespace Caudal
 {
+    [System.Serializable]
+    public sealed class DialogueLine
+    {
+        public DialogueTrigger trigger;
+        public CharacterRole role;
+        [TextArea(2, 4)] public string text;
+        [Min(1)] public float duration = 3;
+    }
+
     public enum GameState
     {
         DayStart, Playing, DaySummary, GameOver, CharacterSelection
@@ -11,6 +20,7 @@ namespace Caudal
         [SerializeField] float missedQuotaProductivityPenalty = 5, endingLow = 40, endingHigh = 60;
         [SerializeField] CharacterData[] workerCharacters;
         [SerializeField] CharacterData[] bossCharacters;
+        [SerializeField] DialogueLine[] dialogueLines;
         int workerIndex, bossIndex;
         public bool WorkerReady { get; private set; }
         public bool BossReady { get; private set; }
@@ -26,6 +36,7 @@ namespace Caudal
         public TaskStrategy Strategy { get; private set; }
         public bool Simulator => developmentSimulator;
         public string ResultText { get; private set; } = "";
+        public event System.Action<CharacterRole, string, float> OnDialogue;
         public void Initialize(StatsManager stats, DayManager days, TaskManager tasks, InputRouter input)
         {
             Stats = stats;
@@ -33,6 +44,8 @@ namespace Caudal
             Tasks = tasks;
             Input = input;
             tasks.Initialize(stats, days);
+            tasks.OnBacklogUrgencyReached += () => ShowDialogue(DialogueTrigger.BacklogUrgency, CharacterRole.Worker);
+            tasks.OnInteractionResolved += HandleInteractionResolved;
         }
 
         public void Restart()
@@ -218,7 +231,53 @@ namespace Caudal
             if (!met)
                 Stats.Apply(0, -missedQuotaProductivityPenalty);
             ResultText = $"DÍA {Days.CurrentDay} TERMINADO\n\nCuota: {Days.QuotaProgress:0}/{Days.QuotaTarget:0} — {(met ? "Cumplida" : "Incumplida")}\nCompletadas: {Tasks.Count(TaskStatus.Completed)}  ·  Rechazadas: {Tasks.Count(TaskStatus.Rejected)}\nFallidas: {Tasks.Count(TaskStatus.Failed)}  ·  Expiradas: {Tasks.Count(TaskStatus.Expired)}\nFelicidad: {Stats.Happiness:0}  ·  Productividad: {Stats.Productivity:0}\n\nConfirmar para continuar";
+            ShowDialogue(met ? DialogueTrigger.DayQuotaMet : DialogueTrigger.DayQuotaMissed, CharacterRole.Boss);
             State = GameState.DaySummary;
+        }
+
+        void HandleInteractionResolved(TaskInstance task, InteractionKind kind, InteractionResult result)
+        {
+            if (task == null) return;
+            bool success = result == InteractionResult.Success;
+            DialogueTrigger trigger = kind switch
+            {
+                InteractionKind.Assignment => success ? DialogueTrigger.AssignmentSuccess : DialogueTrigger.AssignmentFailure,
+                InteractionKind.Execution => success ? DialogueTrigger.ExecutionSuccess : DialogueTrigger.ExecutionFailure,
+                _ => success ? DialogueTrigger.RefusalSuccess : DialogueTrigger.RefusalFailure
+            };
+            ShowDialogue(trigger, kind == InteractionKind.Assignment ? CharacterRole.Boss : CharacterRole.Worker);
+        }
+
+        void ShowDialogue(DialogueTrigger trigger, CharacterRole defaultRole)
+        {
+            DialogueLine line = null;
+            if (dialogueLines != null)
+                foreach (var candidate in dialogueLines)
+                    if (candidate != null && candidate.trigger == trigger) { line = candidate; break; }
+
+            string text = line != null && !string.IsNullOrWhiteSpace(line.text) ? line.text : DefaultDialogue(trigger);
+            CharacterRole role = line != null ? line.role : defaultRole;
+            float duration = line != null ? Mathf.Max(1, line.duration) : 3;
+            OnDialogue?.Invoke(role, text, duration);
+            CharacterData speaker = role == CharacterRole.Boss ? BossCharacter : WorkerCharacter;
+            if (speaker != null && speaker.speechClip != null)
+                AudioSource.PlayClipAtPoint(speaker.speechClip, Vector3.zero);
+        }
+
+        static string DefaultDialogue(DialogueTrigger trigger)
+        {
+            switch (trigger)
+            {
+                case DialogueTrigger.BacklogUrgency: return "Hay demasiadas tareas pendientes. ¡Resolvamos la más antigua!";
+                case DialogueTrigger.AssignmentSuccess: return "La tarea ya está en marcha.";
+                case DialogueTrigger.AssignmentFailure: return "La asignación no salió como esperaba.";
+                case DialogueTrigger.ExecutionSuccess: return "Tarea terminada. Sigamos adelante.";
+                case DialogueTrigger.ExecutionFailure: return "No pude terminar esta tarea.";
+                case DialogueTrigger.RefusalSuccess: return "Gracias por escuchar mi decisión.";
+                case DialogueTrigger.RefusalFailure: return "Aún tenemos que hablar de esta solicitud.";
+                case DialogueTrigger.DayQuotaMet: return "Cumplimos la cuota de hoy.";
+                default: return "Hoy no alcanzamos la cuota.";
+            }
         }
         void ShowEnding()
         {

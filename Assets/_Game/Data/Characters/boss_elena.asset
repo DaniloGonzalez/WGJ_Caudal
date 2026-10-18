@@ -3,13 +3,19 @@
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9ea734597ddb4b2e99df98de20128638, type: 3}
   m_Name: boss_elena
   m_EditorClassIdentifier:
   role: 1
-  characterName: Elena
+  characterName: Miranda
   portrait: {fileID: 2800000, guid: 4b433e5ba746d40518a72e82c1d81d3b, type: 3}
-  biography: Planifica las entregas para sacar más producción de cada tarea completada.
+  biography: "Miranda es una mujer despiadada. Ve la oficina como un campo de batalla. Lograr las mejor productividad es su primera (y a veces) \xFAnica misi\xF3n."
   quotaBonusPercent: 15
   productivityBonusPercent: 0
   happinessCostReductionPercent: 0
