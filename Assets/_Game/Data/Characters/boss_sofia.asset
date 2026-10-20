@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   role: 1
   characterName: Michael
-  portrait: {fileID: 2800000, guid: 4b433e5ba746d40518a72e82c1d81d3b, type: 3}
+  portrait: {fileID: 2800000, guid: 46d1fb6d56c4906439460f431bea0bea, type: 3}
   speechClip: {fileID: 8300000, guid: 742ca086ebf494a559be95a23432d51f, type: 3}
   dialogueLines: []
   biography: "El deseo de Michael es que todos en la oficina est\xE9n bien, pues en su cabeza, su familia y oficina son casi pr\xE1cticamente lo mismo. Ama ser jefe, le encantan las reuniones y las conversaciones de pasillo. Para \xE9l, el nivel de rendimiento \u201Cexcelente\u201D es bajo. No hace falta mucho para poder hacerlo feliz. "

@@ -24,15 +24,6 @@ namespace Caudal
             controlsLabel.text = ready
                 ? $"{FormatKey(keys.cancel)}: VOLVER A ELEGIR"
                 : $"{FormatKey(keys.left)} / {FormatKey(keys.right)} CAMBIAR · {FormatKey(keys.confirm)} ELEGIR";
-            controlsLabel.fontSize = 18;
-            controlsLabel.resizeTextForBestFit = true;
-            controlsLabel.resizeTextMinSize = 13;
-            controlsLabel.resizeTextMaxSize = 18;
-            controlsLabel.alignment = TextAnchor.MiddleCenter;
-            controlsLabel.horizontalOverflow = HorizontalWrapMode.Wrap;
-            controlsLabel.verticalOverflow = VerticalWrapMode.Truncate;
-            if (previousArrow != null) previousArrow.fontSize = 38;
-            if (nextArrow != null) nextArrow.fontSize = 38;
             if (previousArrow != null) previousArrow.gameObject.SetActive(canCycle && !ready);
             if (nextArrow != null) nextArrow.gameObject.SetActive(canCycle && !ready);
         }

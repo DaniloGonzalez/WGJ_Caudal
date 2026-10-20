@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   role: 1
   characterName: Miranda
-  portrait: {fileID: 2800000, guid: 4b433e5ba746d40518a72e82c1d81d3b, type: 3}
+  portrait: {fileID: 2800000, guid: 46d1fb6d56c4906439460f431bea0bea, type: 3}
   speechClip: {fileID: 8300000, guid: 742ca086ebf494a559be95a23432d51f, type: 3}
   dialogueLines: []
   biography: "Miranda es una mujer despiadada. Ve la oficina como un campo de batalla. Lograr las mejor productividad es su primera (y a veces) \xFAnica misi\xF3n."
