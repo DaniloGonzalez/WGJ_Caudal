@@ -22,6 +22,7 @@ namespace Caudal
         readonly List<TaskInstance> tasks = new List<TaskInstance>();
         readonly Dictionary<CharacterRole, List<TaskInstance>> taskBoards = new Dictionary<CharacterRole, List<TaskInstance>>();
         readonly List<string> expiredTasksThisDay = new List<string>();
+        readonly HashSet<TaskData> previousWaveTasks = new HashSet<TaskData>();
         int nextId;
         StatsManager stats;
         DayManager days;
@@ -132,6 +133,7 @@ namespace Caudal
             activeRole = role;
             Assigning = Pending = Active = null;
             tasks.Clear();
+            previousWaveTasks.Clear();
             FailedThisDay = ExpiredThisDay = InactiveCompletedThisDay = 0;
             CompletedThisDay = RejectedThisDay = 0;
             expiredTasksThisDay.Clear();
@@ -145,24 +147,69 @@ namespace Caudal
         void CreateWave()
         {
             tasks.Clear();
-            var templates = new List<TaskData>();
+            var productivityTasks = new List<TaskData>();
+            var happinessTasks = new List<TaskData>();
             var minigames = new HashSet<GameObject>();
             foreach (var data in catalog)
             {
                 if (data == null || data.owner != activeRole) continue;
                 var prefab = data.GetMinigamePrefab(activeRole);
                 if (prefab == null || !minigames.Add(prefab)) continue;
-                templates.Add(data);
+                if (data.affectedStat == TaskStat.Productivity)
+                    productivityTasks.Add(data);
+                else
+                    happinessTasks.Add(data);
             }
 
-            if (templates.Count != 3)
+            int productivityCount = activeRole == CharacterRole.Boss ? 2 : 1;
+            int happinessCount = 3 - productivityCount;
+            if (productivityTasks.Count < productivityCount || happinessTasks.Count < happinessCount)
             {
-                Debug.LogError($"TaskManager: se esperaban 3 minijuegos para {activeRole}, se encontraron {templates.Count}.", this);
+                Debug.LogError($"TaskManager: faltan minijuegos para completar el balance de Productividad/Bienestar de {activeRole}.", this);
                 return;
             }
 
+            var templates = new List<TaskData>(3);
+            templates.AddRange(SelectWaveTasks(productivityTasks, productivityCount));
+            templates.AddRange(SelectWaveTasks(happinessTasks, happinessCount));
+            Shuffle(templates);
+
             for (int i = 0; i < templates.Count; i++)
                 tasks.Add(new TaskInstance(++nextId, days.CurrentDay, templates[i], 0, waveNumber));
+
+            previousWaveTasks.Clear();
+            foreach (var task in templates)
+                previousWaveTasks.Add(task);
+        }
+
+        List<TaskData> SelectWaveTasks(List<TaskData> candidates, int count)
+        {
+            var available = new List<TaskData>();
+            foreach (var candidate in candidates)
+                if (!previousWaveTasks.Contains(candidate))
+                    available.Add(candidate);
+
+            // Reuse an earlier task only if the role has too few alternatives.
+            if (available.Count < count)
+                available = new List<TaskData>(candidates);
+
+            var selected = new List<TaskData>(count);
+            for (int i = 0; i < count; i++)
+            {
+                int index = UnityEngine.Random.Range(0, available.Count);
+                selected.Add(available[index]);
+                available.RemoveAt(index);
+            }
+            return selected;
+        }
+
+        static void Shuffle(List<TaskData> items)
+        {
+            for (int i = items.Count - 1; i > 0; i--)
+            {
+                int j = UnityEngine.Random.Range(0, i + 1);
+                (items[i], items[j]) = (items[j], items[i]);
+            }
         }
 
         public bool BeginNextWave()
@@ -224,6 +271,7 @@ namespace Caudal
         public void StartDay(CharacterRole role)
         {
             waveMode = false;
+            previousWaveTasks.Clear();
             waveTransitionPending = dayEnding = waveExpired = false;
             activeRole = role;
             Assigning = null;
@@ -523,9 +571,8 @@ namespace Caudal
                 {
                     waveExpired = true;
                     FailAvailableWaveTasks();
-                    if (Active != null)
-                        Resolve(Active.Id, Active.Day, InteractionKind.Execution, InteractionResult.Failure);
-                    else
+                    // An opened minigame keeps its own clock; unavailable tasks expire once.
+                    if (Active == null)
                         RequestWaveTransition();
                 }
                 return;
@@ -591,6 +638,7 @@ namespace Caudal
         public void ClearTaskBoards()
         {
             waveMode = false;
+            previousWaveTasks.Clear();
             waveExpired = waveTransitionPending = dayEnding = false;
             waveNumber = 0;
             waveTimeRemaining = 0;

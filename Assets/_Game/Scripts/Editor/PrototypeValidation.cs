@@ -58,13 +58,9 @@ namespace Caudal.Editor
                 Check(Mathf.Approximately((float)typeof(TaskManager).GetField("waveDuration", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(tasks), 15),
                     "Each wave lasts 15 seconds");
 
-                ValidateWaveRole(game, stats, days, tasks, CharacterRole.Worker,
-                    new[] { "correo", "datos", "archivo" },
-                    new[] { TaskStat.Happiness, TaskStat.Productivity, TaskStat.Happiness });
+                ValidateWaveRole(game, stats, days, tasks, CharacterRole.Worker);
                 game.Restart();
-                ValidateWaveRole(game, stats, days, tasks, CharacterRole.Boss,
-                    new[] { "reunion", "agenda", "informe" },
-                    new[] { TaskStat.Productivity, TaskStat.Productivity, TaskStat.Happiness });
+                ValidateWaveRole(game, stats, days, tasks, CharacterRole.Boss);
 
                 ValidateEndings(game, stats, days, results);
                 Debug.Log("CAUDAL_WAVES_AND_ENDINGS_PASSED: waves and all four Friday endings verified at the 50 threshold.");
@@ -73,7 +69,7 @@ namespace Caudal.Editor
         }
 
         static void ValidateWaveRole(GameManager game, StatsManager stats, DayManager days, TaskManager tasks,
-            CharacterRole role, string[] expectedIds, TaskStat[] expectedStats)
+            CharacterRole role)
         {
             game.ConfirmCharacter(role == CharacterRole.Boss);
             Check(game.State == GameState.Playing && game.ActiveRole == role && days.CurrentDay == 1,
@@ -84,14 +80,21 @@ namespace Caudal.Editor
                 "Wave loop has no cross-day backlog");
 
             var minigames = new HashSet<GameObject>();
+            var firstWaveTasks = new HashSet<TaskData>();
+            int productivityCount = 0;
+            int happinessCount = 0;
             for (int i = 0; i < 3; i++)
             {
                 var task = tasks.Tasks[i];
-                Check(task.Owner == role && task.Data.taskId == expectedIds[i] && task.Data.affectedStat == expectedStats[i],
-                    role + " task mapping " + i);
+                Check(task.Owner == role, role + " only receives its own tasks");
+                firstWaveTasks.Add(task.Data);
+                if (task.Data.affectedStat == TaskStat.Productivity) productivityCount++;
+                else happinessCount++;
                 Check(task.Data.GetMinigamePrefab(role) != null && minigames.Add(task.Data.GetMinigamePrefab(role)),
                     role + " has one distinct existing minigame per task");
             }
+            Check(productivityCount == (role == CharacterRole.Boss ? 2 : 1) && happinessCount == (role == CharacterRole.Boss ? 1 : 2),
+                role + " wave has the required stat balance");
 
             float happiness = stats.Happiness;
             float productivity = stats.Productivity;
@@ -120,6 +123,8 @@ namespace Caudal.Editor
 
             Check(tasks.BeginNextWave() && tasks.WaveNumber == 2 && tasks.Tasks[0].Difficulty == 2 &&
                 Mathf.Approximately(tasks.WaveTimeRemaining, 15), "Second wave uses medium difficulty");
+            foreach (var task in tasks.Tasks)
+                Check(!firstWaveTasks.Contains(task.Data), role + " avoids repeating previous-wave tasks when alternatives exist");
             tasks.FinishWaveTransition();
             for (int i = 0; i < 3; i++) Check(tasks.RejectOwnTask(i), "Wave two tasks resolve");
             Check(tasks.BeginNextWave() && tasks.WaveNumber == 3 && tasks.Tasks[0].Difficulty == 3,
@@ -129,8 +134,17 @@ namespace Caudal.Editor
             Check(tasks.StartOwnTask(0), "Can start task before wave timeout");
             SetField(tasks, "waveTimeRemaining", .01f);
             tasks.Tick(.02f);
-            Check(tasks.FailedThisDay == 2 && tasks.ExpiredThisDay == 2 && !tasks.HasActiveMinigame &&
-                tasks.WaveTransitionPending, "Wave timeout fails all unresolved tasks once");
+            Check(tasks.ExpiredThisDay == 2 && tasks.HasActiveMinigame &&
+                !tasks.WaveTransitionPending, "Wave timeout preserves the opened minigame");
+            var finishingTask = tasks.Active;
+            happiness = stats.Happiness;
+            productivity = stats.Productivity;
+            tasks.Tick(20);
+            Check(tasks.Resolve(finishingTask.Id, finishingTask.Day, InteractionKind.Execution, InteractionResult.Success),
+                "Opened minigame can finish after wave timeout");
+            CheckStatChange(stats, finishingTask.Data.affectedStat, 5, happiness, productivity, "Late wave success rewards once");
+            Check(!tasks.Resolve(finishingTask.Id, finishingTask.Day, InteractionKind.Execution, InteractionResult.Success) &&
+                tasks.WaveTransitionPending, "Duplicate result ignored before next wave");
 
             Check(tasks.BeginNextWave(), "Unlimited waves can continue");
             tasks.FinishWaveTransition();

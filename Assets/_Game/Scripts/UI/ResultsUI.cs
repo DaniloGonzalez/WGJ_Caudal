@@ -41,9 +41,8 @@ namespace Caudal
         [SerializeField] Image productivityMeter;
         [SerializeField] Text happinessValue;
         [SerializeField] Text productivityValue;
-        [SerializeField] Color lowColor = new Color(231f / 255f, 106f / 255f, 106f / 255f, 1f);
-        [SerializeField] Color middleColor = Color.white;
-        [SerializeField] Color highColor = new Color(101f / 255f, 199f / 255f, 131f / 255f, 1f);
+        [SerializeField] Color happinessColor = new Color32(139, 232, 77, 255);
+        [SerializeField] Color productivityColor = new Color32(159, 151, 254, 255);
 
         GameManager game;
         Color dayTextColor, captionColor, completedColor, detailColor, promptColor;
@@ -153,8 +152,8 @@ namespace Caudal
                 ? game.Days.AverageHappiness : game.Stats.Happiness;
             float productivity = isFinal && game.Days.RecordedClosingDays >= game.Days.TotalDays
                 ? game.Days.AverageProductivity : game.Stats.Productivity;
-            UpdateMeter(happinessMeter, happinessValue, happiness);
-            UpdateMeter(productivityMeter, productivityValue, productivity);
+            UpdateMeter(happinessMeter, happinessValue, happiness, happinessColor);
+            UpdateMeter(productivityMeter, productivityValue, productivity, productivityColor);
         }
 
         Sprite GetEndingSprite(string title)
@@ -212,18 +211,12 @@ namespace Caudal
             }
         }
 
-        void UpdateMeter(Image meter, Text valueText, float value)
+        void UpdateMeter(Image meter, Text valueText, float value, Color color)
         {
             float clampedValue = Mathf.Clamp(value, 0f, 100f);
-            meter.color = GetMeterColor(clampedValue);
+            meter.color = Color.Lerp(Color.white, color, clampedValue / 100f);
             meter.fillAmount = 1f;
             valueText.text = Mathf.RoundToInt(clampedValue).ToString();
-        }
-
-        Color GetMeterColor(float value)
-        {
-            if (value <= 50f) return Color.Lerp(lowColor, middleColor, value / 50f);
-            return Color.Lerp(middleColor, highColor, (value - 50f) / 50f);
         }
     }
 }

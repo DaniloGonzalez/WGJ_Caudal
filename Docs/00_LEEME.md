@@ -19,6 +19,8 @@ Actualizado: 2026-10-21. Este archivo resume el estado observado del proyecto pa
 
 La implementación activa reemplaza el flujo anterior de pendientes y cuotas: la jornada dura 45 segundos y genera oleadas de 15 segundos con las tres tareas/minijuegos del personaje seleccionado. Cada tarea suma o resta 5 a su estadística configurada; la dificultad escala fácil, media y difícil. No se generan tareas para el personaje inactivo. La transición anima las tarjetas y pausa los relojes. Ver `08_SISTEMA_OLEADAS.md` para reglas, asignaciones y validación. Las notas posteriores de este README sobre cuotas, pendientes y balance documentan el prototipo anterior y no describen el loop activo.
 
+Los doce minijuegos recibieron una pasada de jugabilidad y presentación a 1920 × 1080: sprites sin estirar, textos y zonas de clic más claros, arrastre con offset correcto, encaje visual en destinos y reinicio limpio. Disponen de 22/20/18 segundos en dificultad fácil/media/difícil. Las oleadas permanecen en 15 segundos y esperan el resultado del minijuego que ya esté abierto. `SixMinigamesValidation` pasó los doce juegos en las tres dificultades y `PrototypeValidation` pasó oleadas, estadísticas y finales. El detalle está en `08_SISTEMA_OLEADAS.md`.
+
 Los cuatro finales utilizan únicamente los valores actuales de Productividad y Bienestar al cerrar el viernes; no usan ni promedian los cierres de los cinco días. El umbral es 50 y ese valor cuenta como positivo. Cada final muestra su ilustración, título, narrativa y valores del viernes. Se comprobó la tabla completa en Unity, incluido el clic para reiniciar. El detalle se encuentra en `07_REWORK_RESUMEN_DIARIO.md`.
 
 ## Proyecto y dirección confirmados

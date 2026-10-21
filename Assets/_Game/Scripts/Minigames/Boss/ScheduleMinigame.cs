@@ -18,6 +18,7 @@ public class ScheduleMinigame : TimedMinigame, IPointerClickHandler
 
     protected override void OnMinigameStarted()
     {
+        carriedCard = -1;
         priorities = new[] { 0, 1, 2 };
         for (int i = priorities.Length - 1; i > 0; i--)
         {
@@ -35,7 +36,7 @@ public class ScheduleMinigame : TimedMinigame, IPointerClickHandler
         }
         for (int i = 0; i < slots.Length; i++)
         {
-            slots[i].text = "ESPACIO " + (i + 1) + "\n—";
+            slots[i].text = PriorityName(i) + "\n—";
             var image = slots[i].transform.parent.GetComponent<Image>();
             if (image != null)
             {
@@ -79,7 +80,7 @@ public class ScheduleMinigame : TimedMinigame, IPointerClickHandler
                     AddError("Ese espacio no corresponde.");
                     return;
                 }
-                slots[i].text = "ESPACIO " + (i + 1) + "\n" + PriorityName(priorities[carriedCard]);
+                slots[i].text = PriorityName(i) + "\n" + PriorityName(priorities[carriedCard]);
                 cards[carriedCard].gameObject.SetActive(false);
                 bool allPlaced = true;
                 foreach (var card in cards) allPlaced &= !card.gameObject.activeSelf;

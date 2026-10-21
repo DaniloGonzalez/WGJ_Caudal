@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 
-public class WireConnectionMinigame : TimedMinigame, IPointerClickHandler
+public class WireConnectionMinigame : TimedMinigame, IPointerClickHandler, IPointerMoveHandler
 {
     public override string ControlsHint => "Haz clic en un cable y luego en el conector del mismo color.";
     [SerializeField] private Image[] cables;
@@ -21,6 +21,7 @@ public class WireConnectionMinigame : TimedMinigame, IPointerClickHandler
 
     protected override void OnMinigameStarted()
     {
+        selectedCable = -1;
         connectorColors = new[] { 0, 1, 2 };
         for (int i = connectorColors.Length - 1; i > 0; i--)
         {
@@ -39,6 +40,7 @@ public class WireConnectionMinigame : TimedMinigame, IPointerClickHandler
             cables[i].raycastTarget = true;
             connectors[i].raycastTarget = true;
             connectionLines[i].gameObject.SetActive(false);
+            connectionLines[i].raycastTarget = false;
             cables[i].gameObject.SetActive(true);
             connectors[i].gameObject.SetActive(true);
         }
@@ -60,6 +62,7 @@ public class WireConnectionMinigame : TimedMinigame, IPointerClickHandler
                     selectedCable = i;
                     selected = connectors.Length - 1;
                     SetFeedback("Haz clic en su conector del mismo color.");
+                    DrawPendingConnection(i, eventData.position, eventData.pressEventCamera);
                     ShowSelection();
                     return;
                 }
@@ -86,6 +89,28 @@ public class WireConnectionMinigame : TimedMinigame, IPointerClickHandler
                     return;
                 }
         }
+    }
+
+    public void OnPointerMove(PointerEventData eventData)
+    {
+        if (selectedCable >= 0 && !connected[selectedCable])
+            DrawPendingConnection(selectedCable, eventData.position, eventData.pressEventCamera);
+    }
+
+    private void DrawPendingConnection(int cable, Vector2 screenPosition, Camera eventCamera)
+    {
+        RectTransform line = connectionLines[cable].rectTransform;
+        if (!RectTransformUtility.ScreenPointToWorldPointInRectangle((RectTransform)transform,
+            screenPosition, eventCamera, out Vector3 end))
+            return;
+
+        Vector3 start = cables[cable].rectTransform.position;
+        Vector3 direction = end - start;
+        line.position = (start + end) * .5f;
+        line.sizeDelta = new Vector2(direction.magnitude, 8);
+        line.rotation = Quaternion.FromToRotation(Vector3.right, direction);
+        connectionLines[cable].color = colors[cable];
+        connectionLines[cable].gameObject.SetActive(true);
     }
 
     private void DrawConnection(int cable, int connector)

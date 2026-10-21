@@ -2,6 +2,16 @@
 
 Actualizado: 2026-10-21. La escena y los assets de Unity son la fuente de verdad para la configuración.
 
+## Pulido de minijuegos y tiempo de resolución
+
+Los doce minijuegos usan ahora una ventana amplia, fondos por personaje y assets con `preserveAspect`, de modo que los sprites mantienen su proporción. Se reajustaron textos, contadores, zonas de interacción y posiciones tomando los mockups como referencia. La duración base es 22 segundos: fácil dispone de 22, media de 20 y difícil de 18. La dificultad sigue modificando la mecánica de los minijuegos que tienen parámetros propios, pero ya no acelera el reloj multiplicando `deltaTime`.
+
+Las oleadas continúan durando 15 segundos. Cuando vence una oleada, las tareas que no se abrieron se registran como vencidas, mientras el minijuego abierto conserva su reloj y puede entregar un único resultado antes de iniciar la transición. El final de la jornada mantiene la misma regla.
+
+Los juegos de arrastre (`Sellar contratos`, `Organizar descansos` y `Ordenar escritorio`) conservan el punto exacto donde se tomó el objeto, siguen el cursor sin desplazamiento y restauran toda su geometría al fallar o reabrirse. Los contratos pueden sellarse en cualquier orden; los empleados asignados no pueden contarse dos veces; los objetos del escritorio encajan dentro de la categoría correcta. `Reiniciar servidor` vuelve a mostrar la secuencia tras un error y `Fotocopiadora infernal` calcula el acierto mediante la posición visible del cursor sobre la zona verde.
+
+La validación `SixMinigamesValidation` comprueba éxito en fácil, media y difícil, fracaso, reapertura, raycast y seguimiento del cursor para los doce prefabs. La revisión final se ejecutó a 1920 × 1080, comprobó los popups de ambos personajes y terminó sin errores de compilación ni consola. `PrototypeValidation` confirmó además las oleadas de 15 segundos, la espera del minijuego activo, estadísticas y finales.
+
 ## Reglas activas
 
 - Cada jornada dura 45 segundos (`DayManager.dayDuration`, configurado en `Main`).

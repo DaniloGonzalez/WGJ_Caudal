@@ -15,6 +15,7 @@ MonoBehaviour:
   taskId: agenda
   taskName: Organizar agenda
   owner: 1
+  affectedStat: 1
   category: 0
   description: "Coordina los pr\xF3ximos compromisos."
   difficulty: 1
@@ -22,7 +23,7 @@ MonoBehaviour:
   productivityReward: 4
   quotaReward: 13
   assignmentTimeLimit: 12
-  executionTimeLimit: 12
+  executionTimeLimit: 22
   rejectionHappinessChange: 0
   keepAfterFailure: 1
   requiresRefusalMinigame: 0

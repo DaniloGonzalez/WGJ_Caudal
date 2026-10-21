@@ -13,29 +13,41 @@ public class EmailCleaningMinigame : TimedMinigame, IPointerClickHandler
     [SerializeField] private Text progressText;
 
     private bool[] isSpam;
+    private int cardCount;
+    private int spamCount;
     private int selected;
     private int removedSpam;
 
     protected override void OnMinigameStarted()
     {
+        cardCount = Difficulty == 1 ? Mathf.Min(4, cards.Length) : cards.Length;
+        spamCount = cardCount / 2;
+        if (Difficulty == 3) SetErrorLimit(1);
         isSpam = new bool[cards.Length];
         removedSpam = 0;
-        for (int i = 0; i < cards.Length / 2; i++) isSpam[i] = true;
-        for (int i = isSpam.Length - 1; i > 0; i--)
+        for (int i = 0; i < spamCount; i++) isSpam[i] = true;
+        for (int i = cardCount - 1; i > 0; i--)
         {
             int j = Random.Range(0, i + 1);
             (isSpam[i], isSpam[j]) = (isSpam[j], isSpam[i]);
         }
         for (int i = 0; i < cards.Length; i++)
         {
-            int column = i % 3;
-            bool topRow = i < 3;
-            float xMin = .08f + column * .31f;
-            float xMax = xMin + .22f;
-            cards[i].rectTransform.anchorMin = new Vector2(xMin, topRow ? .64f : .30f);
-            cards[i].rectTransform.anchorMax = new Vector2(xMax, topRow ? .82f : .48f);
+            bool visible = i < cardCount;
+            cards[i].gameObject.SetActive(visible);
+            labels[i].gameObject.SetActive(visible);
+            if (!visible) continue;
+            int columns = cardCount <= 4 ? 2 : 3;
+            int rows = Mathf.CeilToInt((float)cardCount / columns);
+            int row = i / columns;
+            int column = i % columns;
+            float cellWidth = .82f / columns;
+            float centerX = .09f + cellWidth * (column + .5f);
+            float centerY = rows == 1 ? .55f : row == 0 ? .70f : .36f;
+            cards[i].rectTransform.anchorMin = new Vector2(centerX - cellWidth * .38f, centerY - .10f);
+            cards[i].rectTransform.anchorMax = new Vector2(centerX + cellWidth * .38f, centerY + .10f);
             cards[i].gameObject.SetActive(true);
-            labels[i].text = (isSpam[i] ? "SPAM" : "IMPORTANTE") + "\nCorreo " + (i + 1);
+            labels[i].text = isSpam[i] ? "SPAM" : "IMPORTANTE";
             labels[i].gameObject.SetActive(true);
             labels[i].raycastTarget = false;
             labels[i].rectTransform.anchorMin = new Vector2(0, -.55f);
@@ -43,10 +55,10 @@ public class EmailCleaningMinigame : TimedMinigame, IPointerClickHandler
             labels[i].rectTransform.offsetMin = Vector2.zero;
             labels[i].rectTransform.offsetMax = Vector2.zero;
             labels[i].alignment = TextAnchor.MiddleCenter;
-            labels[i].fontSize = 12;
+            labels[i].fontSize = 20;
             labels[i].resizeTextForBestFit = true;
-            labels[i].resizeTextMinSize = 10;
-            labels[i].resizeTextMaxSize = 12;
+            labels[i].resizeTextMinSize = 18;
+            labels[i].resizeTextMaxSize = 20;
             labels[i].horizontalOverflow = HorizontalWrapMode.Wrap;
             labels[i].verticalOverflow = VerticalWrapMode.Truncate;
             cards[i].sprite = isSpam[i] ? spamSprite : importantSprite;
@@ -74,7 +86,7 @@ public class EmailCleaningMinigame : TimedMinigame, IPointerClickHandler
                 removedSpam++;
                 SetFeedback("Spam eliminado.");
                 MoveSelectionToAvailableCard();
-                if (removedSpam == cards.Length / 2) Finish(InteractionResult.Success);
+                if (removedSpam == spamCount) Finish(InteractionResult.Success);
             }
             ShowSelection();
             return;
@@ -89,7 +101,15 @@ public class EmailCleaningMinigame : TimedMinigame, IPointerClickHandler
             Highlight(cards[selected]);
         else
             Highlight(null);
-        if (progressText != null) progressText.text = "Spam eliminado: " + removedSpam + " / " + (cards.Length / 2);
+        if (progressText != null)
+        {
+            int importantTotal = cardCount - spamCount;
+            int importantPreserved = 0;
+            for (int i = 0; i < cardCount; i++)
+                if (!isSpam[i] && cards[i].gameObject.activeSelf) importantPreserved++;
+            progressText.text = "Spam eliminado: " + removedSpam + " / " + spamCount
+                + " · Importantes preservados: " + importantPreserved + " / " + importantTotal;
+        }
     }
 
     private void MoveSelectionToAvailableCard()

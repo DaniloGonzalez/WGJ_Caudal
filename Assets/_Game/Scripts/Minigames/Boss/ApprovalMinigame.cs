@@ -5,7 +5,7 @@ using UnityEngine.EventSystems;
 
 public class ApprovalMinigame : TimedMinigame, IPointerClickHandler
 {
-    public override string ControlsHint => "Lee cada solicitud y haz clic en Aprobar o Rechazar.";
+    public override string ControlsHint => "Regla: aprueba cambios de turno y correcciones honestas; rechaza exponer nóminas o alterar registros.";
     [SerializeField] private Text requestText;
     [SerializeField] private Text decisionText;
     [SerializeField] private Text progressText;
@@ -18,6 +18,7 @@ public class ApprovalMinigame : TimedMinigame, IPointerClickHandler
     private string[] requestTexts;
     private int requestIndex;
     private int decision;
+    private int requestCount;
 
     protected override void OnMinigameStarted()
     {
@@ -31,16 +32,19 @@ public class ApprovalMinigame : TimedMinigame, IPointerClickHandler
         }
         if (approveCard != null) { approveCard.color = Color.white; approveCard.raycastTarget = true; }
         if (rejectCard != null) { rejectCard.color = Color.white; rejectCard.raycastTarget = true; }
-        shouldApprove = new[] { true, true, true, false, false };
+        shouldApprove = new[] { true, true, true, false, false, true, false };
         requestTexts = new[]
         {
             "Ana cubrirá mi turno del viernes. ¿Autorizas el cambio?",
             "El cliente corrigió el total. ¿Actualizo y reenvío el informe?",
             "Interrumpieron mi pausa con una llamada de trabajo. ¿Puedo recuperarla?",
             "¿Autorizas compartir la nómina completa en el canal general?",
-            "¿Borro las horas extra registradas para cerrar el mes?"
+            "¿Borro las horas extra registradas para cerrar el mes?",
+            "Necesito cambiar mi turno para cuidar a mi hijo este viernes.",
+            "¿Oculto el incidente del informe mensual para evitar preguntas?"
         };
-        for (int i = shouldApprove.Length - 1; i > 0; i--)
+        requestCount = Difficulty == 1 ? 3 : Difficulty == 2 ? 5 : 7;
+        for (int i = requestCount - 1; i > 0; i--)
         {
             int j = Random.Range(0, i + 1);
             (shouldApprove[i], shouldApprove[j]) = (shouldApprove[j], shouldApprove[i]);
@@ -75,7 +79,7 @@ public class ApprovalMinigame : TimedMinigame, IPointerClickHandler
         }
 
         requestIndex++;
-        if (requestIndex >= shouldApprove.Length)
+        if (requestIndex >= requestCount)
         {
             Finish(InteractionResult.Success);
             return;
@@ -86,8 +90,8 @@ public class ApprovalMinigame : TimedMinigame, IPointerClickHandler
     private void ShowRequest()
     {
         SetFeedback("");
-        requestText.text = "SOLICITUD " + (requestIndex + 1) + "/" + requestTexts.Length + "\n\n" + requestTexts[requestIndex];
-        if (progressText != null) progressText.text = "Procesadas: " + requestIndex + " / 5";
+        requestText.text = "REGLA: aprueba cambios de turno y correcciones honestas; rechaza exponer nóminas o alterar registros.\n\nSOLICITUD " + (requestIndex + 1) + "/" + requestCount + "\n" + requestTexts[requestIndex];
+        if (progressText != null) progressText.text = "Procesadas: " + requestIndex + " / " + requestCount;
         decision = 0;
         ShowDecision();
     }
@@ -111,10 +115,10 @@ public class ApprovalMinigame : TimedMinigame, IPointerClickHandler
 
         if (requestText != null)
         {
-            requestText.fontSize = 12;
+            requestText.fontSize = 20;
             requestText.resizeTextForBestFit = true;
-            requestText.resizeTextMinSize = 12;
-            requestText.resizeTextMaxSize = 14;
+            requestText.resizeTextMinSize = 18;
+            requestText.resizeTextMaxSize = 20;
             requestText.fontStyle = FontStyle.Bold;
             requestText.alignment = TextAnchor.MiddleCenter;
             requestText.color = Color.black;
@@ -129,20 +133,20 @@ public class ApprovalMinigame : TimedMinigame, IPointerClickHandler
 
         if (FeedbackLabel != null)
         {
-            FeedbackLabel.fontSize = 10;
+            FeedbackLabel.fontSize = 18;
             FeedbackLabel.resizeTextForBestFit = true;
-            FeedbackLabel.resizeTextMinSize = 9;
-            FeedbackLabel.resizeTextMaxSize = 10;
+            FeedbackLabel.resizeTextMinSize = 17;
+            FeedbackLabel.resizeTextMaxSize = 18;
             FeedbackLabel.alignment = TextAnchor.MiddleCenter;
             FeedbackLabel.horizontalOverflow = HorizontalWrapMode.Wrap;
         }
 
         if (progressText != null)
         {
-            progressText.fontSize = 11;
+            progressText.fontSize = 20;
             progressText.resizeTextForBestFit = true;
-            progressText.resizeTextMinSize = 9;
-            progressText.resizeTextMaxSize = 11;
+            progressText.resizeTextMinSize = 18;
+            progressText.resizeTextMaxSize = 20;
             progressText.alignment = TextAnchor.MiddleCenter;
         }
     }

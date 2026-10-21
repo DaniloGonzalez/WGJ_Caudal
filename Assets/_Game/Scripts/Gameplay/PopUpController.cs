@@ -45,11 +45,11 @@ public class PopUpController : MonoBehaviour
             if (panel != null)
             {
                 panel.sprite = task.Data.minigameWindowBackground;
-                panel.type = Image.Type.Simple;
-                panel.preserveAspect = panel.sprite != null;
-                float aspect = panel.sprite != null
-                    ? panel.sprite.rect.width / panel.sprite.rect.height
-                    : 410f / 250f;
+                // Nine-slicing expands the empty desktop area without distorting its border or icons.
+                panel.type = Image.Type.Sliced;
+                panel.preserveAspect = false;
+                panel.pixelsPerUnitMultiplier = 2f;
+                float aspect = 1.65f;
                 float availableWidth = Mathf.Max(1, rootRect.rect.width * .98f);
                 float availableHeight = Mathf.Max(1, rootRect.rect.height * .96f);
                 float windowHeight = Mathf.Min(660f, availableHeight * .9f, availableWidth * .9f / aspect);
@@ -80,6 +80,8 @@ public class PopUpController : MonoBehaviour
 
         bool hasMinigame = false;
         if (minigamePrefab != null && minigameContainer != null) {
+            // Configure difficulty before OnEnable initializes the puzzle.
+            minigameContainer.gameObject.SetActive(false);
             activeMinigameInstance = Instantiate(minigamePrefab, minigameContainer, false);
 
             if (activeMinigameInstance.TryGetComponent<TimedMinigame>(out var timedMinigame))
@@ -100,6 +102,7 @@ public class PopUpController : MonoBehaviour
             controlsText.text = activeMinigame.ControlsHint;
 
         ConfigureCompactLayout(hasMinigame);
+        if (minigameContainer != null) minigameContainer.gameObject.SetActive(true);
 
         if (closeButton != null) {
             closeButton.onClick.RemoveAllListeners();
@@ -131,9 +134,9 @@ public class PopUpController : MonoBehaviour
         var window = transform.Find("Window") as RectTransform;
         var header = transform.Find("Window/Header") as RectTransform;
         if (header != null)
-            SetRect(header, new Vector2(.02f, 1), new Vector2(.98f, 1), new Vector2(0, -4), new Vector2(0, 42));
+            SetRect(header, new Vector2(.02f, 1), new Vector2(.98f, 1), new Vector2(0, -4), new Vector2(0, 80));
 
-        SetRect(titleText != null ? titleText.rectTransform : null, new Vector2(0, 1), new Vector2(1, 1), new Vector2(18, -22), new Vector2(-36, 38));
+        SetRect(titleText != null ? titleText.rectTransform : null, new Vector2(0, 1), new Vector2(1, 1), new Vector2(18, -35), new Vector2(-190, 50));
         if (titleText != null)
         {
             titleText.rectTransform.pivot = new Vector2(0, .5f);
@@ -153,10 +156,12 @@ public class PopUpController : MonoBehaviour
             if (roleText != null) roleText.gameObject.SetActive(false);
             if (timerText != null) timerText.gameObject.SetActive(false);
             if (timerFill != null) timerFill.gameObject.SetActive(false);
+            var timerBar = transform.Find("Window/Header/TimerBar") ?? transform.Find("Window/TimerBar");
+            if (timerBar != null) timerBar.gameObject.SetActive(false);
             if (controlsText != null) controlsText.gameObject.SetActive(true);
             if (closeButton != null)
             {
-                SetRect(closeButton.transform as RectTransform, new Vector2(.92f, .91f), new Vector2(.99f, .99f), Vector2.zero, Vector2.zero);
+                SetRect(closeButton.transform as RectTransform, new Vector2(1, 1), new Vector2(1, 1), new Vector2(-30, -35), new Vector2(45, 48));
                 var closeImage = closeButton.GetComponent<Image>();
                 if (closeImage != null) closeImage.color = Color.clear;
                 closeButton.gameObject.SetActive(true);
@@ -168,7 +173,7 @@ public class PopUpController : MonoBehaviour
                 float headerHeight = header != null ? header.sizeDelta.y : 42f;
                 float width = Mathf.Max(1f, window.rect.width - 20f);
                 bool detailedHint = activeMinigame.ControlsHint.Contains("\n");
-                float hintHeight = detailedHint ? 30f : 22f;
+                float hintHeight = detailedHint ? 36f : 27f;
                 const float hintMargin = 10f;
                 const float gap = 5f;
                 float top = window.rect.height * .5f - headerHeight - 10f;
@@ -181,10 +186,10 @@ public class PopUpController : MonoBehaviour
             if (controlsText != null)
             {
                 bool detailedHint = activeMinigame.ControlsHint.Contains("\n");
-                controlsText.fontSize = detailedHint ? 10 : 12;
+                controlsText.fontSize = detailedHint ? 13 : 15;
                 controlsText.resizeTextForBestFit = true;
-                controlsText.resizeTextMinSize = detailedHint ? 9 : 10;
-                controlsText.resizeTextMaxSize = detailedHint ? 10 : 12;
+                controlsText.resizeTextMinSize = detailedHint ? 12 : 14;
+                controlsText.resizeTextMaxSize = detailedHint ? 14 : 15;
         controlsText.color = Color.black;
                 controlsText.alignment = TextAnchor.MiddleCenter;
                 controlsText.horizontalOverflow = HorizontalWrapMode.Wrap;

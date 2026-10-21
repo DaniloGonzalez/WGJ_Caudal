@@ -23,7 +23,7 @@ MonoBehaviour:
   productivityReward: 8
   quotaReward: 22
   assignmentTimeLimit: 10
-  executionTimeLimit: 10
+  executionTimeLimit: 22
   rejectionHappinessChange: 0
   keepAfterFailure: 1
   requiresRefusalMinigame: 0

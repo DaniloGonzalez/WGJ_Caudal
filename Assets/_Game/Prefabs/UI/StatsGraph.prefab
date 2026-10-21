@@ -401,9 +401,8 @@ MonoBehaviour:
   productivityMeter: {fileID: 6042634850162507175}
   happinessValue: {fileID: 9046667710992010069}
   productivityValue: {fileID: 610394380973658749}
-  lowColor: {r: 0.90588236, g: 0.41568628, b: 0.41568628, a: 1}
-  middleColor: {r: 1, g: 1, b: 1, a: 1}
-  highColor: {r: 0.39607844, g: 0.78039217, b: 0.5137255, a: 1}
+  happinessColor: {r: 0.54509807, g: 0.9098039, b: 0.3019608, a: 1}
+  productivityColor: {r: 0.62352943, g: 0.5921569, b: 0.99607843, a: 1}
 --- !u!114 &4838167760614017532
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -1,5 +1,6 @@
 using System;
 using Caudal;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -12,20 +13,40 @@ public abstract class TimedMinigame : MonoBehaviour, IMinigame
     [SerializeField] private Text timerText;
     [SerializeField] private Text errorsText;
     [SerializeField] private Text feedbackText;
+    [SerializeField] private TMP_Text timerTextTMP;
+    [SerializeField] private TMP_Text errorsTextTMP;
+    [SerializeField] private TMP_Text feedbackTextTMP;
     [SerializeField] private Image timerFill;
     [SerializeField] private Image selectionOutline;
 
     private float remaining;
+    private float roundDuration;
     private int errors;
     private int startFrame;
     private bool finished;
+    private int configuredErrorLimit;
+    private Image selectedTarget;
+    private Image pointerTarget;
 
     public event Action<InteractionResult> OnFinished;
     public virtual string ControlsHint => "Haz clic en los elementos para completar la tarea.";
     protected int ErrorCount => errors;
     protected int ErrorLimit => errorLimit;
+    protected int Difficulty => difficulty;
     protected float Remaining => remaining;
     protected Text FeedbackLabel => feedbackText;
+    protected TMP_Text TMPFeedbackLabel => feedbackTextTMP;
+
+    protected virtual void Awake()
+    {
+        configuredErrorLimit = errorLimit;
+    }
+
+    protected void SetErrorLimit(int value)
+    {
+        errorLimit = Mathf.Max(1, value);
+        UpdateHud();
+    }
 
     public void SetWaveDifficulty(int level)
     {
@@ -34,6 +55,10 @@ public abstract class TimedMinigame : MonoBehaviour, IMinigame
 
     protected virtual void OnEnable()
     {
+        if (configuredErrorLimit <= 0)
+            configuredErrorLimit = errorLimit;
+        else
+            errorLimit = configuredErrorLimit;
         if (selectionOutline == null)
         {
             var outlineTransform = transform.Find("SelectionOutline");
@@ -42,11 +67,16 @@ public abstract class TimedMinigame : MonoBehaviour, IMinigame
         }
         if (selectionOutline != null)
             selectionOutline.gameObject.SetActive(false);
-        remaining = duration;
+        selectedTarget = null;
+        pointerTarget = null;
+        roundDuration = Mathf.Max(.1f, duration - 2f * (difficulty - 1));
+        remaining = roundDuration;
         errors = 0;
         finished = false;
         startFrame = Time.frameCount;
         foreach (var label in GetComponentsInChildren<Text>(true))
+            label.color = Color.black;
+        foreach (var label in GetComponentsInChildren<TMP_Text>(true))
             label.color = Color.black;
         SetFeedback("");
         OnMinigameStarted();
@@ -58,7 +88,7 @@ public abstract class TimedMinigame : MonoBehaviour, IMinigame
         if (finished || Time.frameCount <= startFrame)
             return;
 
-        remaining -= Time.deltaTime * difficulty;
+        remaining -= Time.deltaTime;
         AdvanceGame(Time.deltaTime);
         UpdateHud();
 
@@ -87,6 +117,8 @@ public abstract class TimedMinigame : MonoBehaviour, IMinigame
     {
         if (feedbackText != null)
             feedbackText.text = message;
+        if (feedbackTextTMP != null)
+            feedbackTextTMP.text = message;
     }
 
     protected void Highlight(Image target)
@@ -111,6 +143,32 @@ public abstract class TimedMinigame : MonoBehaviour, IMinigame
         selectionOutline.gameObject.SetActive(true);
     }
 
+    public void SetSelectionHighlight(Image target)
+    {
+        selectedTarget = target;
+        RefreshSelectionHighlight();
+    }
+
+    public void ShowPointerHighlight(Image target)
+    {
+        pointerTarget = target;
+        RefreshSelectionHighlight();
+    }
+
+    public void ClearPointerHighlight(Image target)
+    {
+        if (pointerTarget != target)
+            return;
+
+        pointerTarget = null;
+        RefreshSelectionHighlight();
+    }
+
+    private void RefreshSelectionHighlight()
+    {
+        Highlight(pointerTarget != null ? pointerTarget : selectedTarget);
+    }
+
     protected void Finish(InteractionResult result)
     {
         if (finished)
@@ -123,9 +181,13 @@ public abstract class TimedMinigame : MonoBehaviour, IMinigame
     {
         if (timerText != null)
             timerText.text = Mathf.CeilToInt(Mathf.Max(0, remaining)) + " s";
+        if (timerTextTMP != null)
+            timerTextTMP.text = Mathf.CeilToInt(Mathf.Max(0, remaining)) + " s";
         if (errorsText != null)
             errorsText.text = failOnErrorLimit ? "Errores: " + errors + " / " + errorLimit : "Errores: " + errors;
+        if (errorsTextTMP != null)
+            errorsTextTMP.text = failOnErrorLimit ? "Errores: " + errors + " / " + errorLimit : "Errores: " + errors;
         if (timerFill != null)
-            timerFill.fillAmount = duration > 0 ? Mathf.Clamp01(remaining / duration) : 0;
+            timerFill.fillAmount = roundDuration > 0 ? Mathf.Clamp01(remaining / roundDuration) : 0;
     }
 }

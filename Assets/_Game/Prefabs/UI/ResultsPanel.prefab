@@ -2088,9 +2088,8 @@ MonoBehaviour:
   productivityMeter: {fileID: 8169656941560600453}
   happinessValue: {fileID: 4074701549653389690}
   productivityValue: {fileID: 1532625988609745990}
-  lowColor: {r: 0.90588236, g: 0.41568628, b: 0.41568628, a: 1}
-  middleColor: {r: 1, g: 1, b: 1, a: 1}
-  highColor: {r: 0.39607844, g: 0.78039217, b: 0.5137255, a: 1}
+  happinessColor: {r: 0.54509807, g: 0.9098039, b: 0.3019608, a: 1}
+  productivityColor: {r: 0.62352943, g: 0.5921569, b: 0.99607843, a: 1}
 --- !u!1 &8140731849633139565
 GameObject:
   m_ObjectHideFlags: 0

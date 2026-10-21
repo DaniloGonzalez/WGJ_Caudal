@@ -15,6 +15,7 @@ MonoBehaviour:
   taskId: reunion
   taskName: "Preparar reuni\xF3n y documentos"
   owner: 1
+  affectedStat: 1
   category: 0
   description: "Ordena los documentos para la reuni\xF3n de la oficina."
   difficulty: 1
@@ -22,7 +23,7 @@ MonoBehaviour:
   productivityReward: 6
   quotaReward: 18
   assignmentTimeLimit: 10
-  executionTimeLimit: 10
+  executionTimeLimit: 22
   rejectionHappinessChange: 0
   keepAfterFailure: 1
   requiresRefusalMinigame: 0

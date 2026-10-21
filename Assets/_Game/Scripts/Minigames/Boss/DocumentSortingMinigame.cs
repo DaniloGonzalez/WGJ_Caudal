@@ -17,17 +17,33 @@ public class DocumentSortingMinigame : TimedMinigame, IPointerClickHandler
     private int[] documentColors;
     private int selected;
     private int carriedDocument = -1;
+    private int baseDocumentCount;
+    private int activeDocumentCount;
+
+    protected override void Awake()
+    {
+        base.Awake();
+        baseDocumentCount = documents.Length;
+    }
 
     protected override void OnMinigameStarted()
     {
-        documentColors = new[] { 0, 1, 2 };
+        carriedDocument = -1;
+        int targetCount = Difficulty == 1 ? 3 : Difficulty == 2 ? 5 : 7;
+        activeDocumentCount = targetCount;
+        EnsureDocumentViews(targetCount);
+        documentColors = new int[targetCount];
+        for (int i = 0; i < targetCount; i++) documentColors[i] = i % trays.Length;
         Shuffle(documentColors);
         remainingDocuments.Clear();
         for (int i = 0; i < documents.Length; i++)
         {
+            documents[i].gameObject.SetActive(i < activeDocumentCount);
+            if (i >= activeDocumentCount) continue;
             remainingDocuments.Add(i);
             if (documentSprites != null && documentColors[i] < documentSprites.Length)
                 documents[i].sprite = documentSprites[documentColors[i]];
+            documents[i].preserveAspect = true;
             documents[i].color = Color.white;
             documents[i].raycastTarget = true;
             documents[i].gameObject.SetActive(true);
@@ -41,6 +57,33 @@ public class DocumentSortingMinigame : TimedMinigame, IPointerClickHandler
         }
         selected = 0;
         ShowSelection();
+    }
+
+    private void EnsureDocumentViews(int count)
+    {
+        if (documents.Length < count)
+        {
+            var expanded = new Image[count];
+            System.Array.Copy(documents, expanded, documents.Length);
+            for (int i = documents.Length; i < count; i++)
+            {
+                expanded[i] = Instantiate(documents[i % baseDocumentCount], documents[0].transform.parent);
+                expanded[i].name = "Documento " + (i + 1);
+            }
+            documents = expanded;
+        }
+
+        RectTransform parent = documents[0].transform.parent as RectTransform;
+        float width = parent != null ? parent.rect.width : 1000f;
+        float cellWidth = width * .76f / count;
+        for (int i = 0; i < documents.Length; i++)
+        {
+            RectTransform rect = documents[i].rectTransform;
+            rect.anchorMin = rect.anchorMax = new Vector2(.5f, .67f);
+            rect.anchoredPosition = new Vector2((i - (count - 1) * .5f) * cellWidth, 0);
+            rect.sizeDelta = new Vector2(Mathf.Min(150, cellWidth * .82f), 150);
+            rect.localScale = Vector3.one;
+        }
     }
 
     public void OnPointerClick(PointerEventData eventData)
