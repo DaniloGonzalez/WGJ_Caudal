@@ -6,7 +6,9 @@ namespace Caudal
     public sealed class IntroPanel : MonoBehaviour
     {
         [SerializeField] Text messageLabel;
-        [SerializeField, TextArea(3, 8)] string introMessage = "BIENVENIDO A DON'T MAKE ME MISERABLE.\nEN DONDE TUS DECISIONES Y HABILIDAD COMO JEFATURA\nY TRABAJADOR DETERMINARÁN EL FUTURO DE TU EMPRESA.\nQUE TUS DECISIONES NO NOS HAGAN A TODOS MISERABLES\nO QUIEBREN LA EMPRESA\n¡AMEN!";
+        [SerializeField] Text closingMessageLabel;
+        [SerializeField, TextArea(12, 22)] string introMessage = "BIENVENIDO A DON'T MAKE ME MISERABLE.\nEN DONDE TUS DECISIONES Y HABILIDAD COMO JEFATURA\nY TRABAJADOR DETERMINARÁN EL FUTURO DE TU EMPRESA.\nQUE TUS DECISIONES NO NOS HAGAN A TODOS MISERABLES\nO QUIEBREN LA EMPRESA\n¡AMEN!";
+        [SerializeField, TextArea(3, 8)] string closingMessage;
         [SerializeField] Button continueButton;
 
         GameManager game;
@@ -25,6 +27,8 @@ namespace Caudal
         {
             if (messageLabel != null)
                 messageLabel.text = introMessage;
+            if (closingMessageLabel != null)
+                closingMessageLabel.text = closingMessage;
             gameObject.SetActive(true);
         }
 
