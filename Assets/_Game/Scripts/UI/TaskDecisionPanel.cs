@@ -6,7 +6,7 @@ namespace Caudal
     public sealed class TaskDecisionPanel : MonoBehaviour
     {
         [SerializeField] Image windowBackground, acceptBackground, rejectBackground;
-        [SerializeField] Text titleLabel, instructionLabel, acceptLabel, rejectLabel;
+        [SerializeField] Text titleLabel, descriptionLabel, instructionLabel, acceptLabel, rejectLabel;
         [SerializeField] Button acceptButton, rejectButton;
         [SerializeField] Sprite bossWindow, workerWindow, bossAcceptButton, workerAcceptButton, rejectButtonSprite;
         [SerializeField, Range(0.1f, 0.4f)] float rolePanelOffset = 0.25f;
@@ -58,10 +58,45 @@ namespace Caudal
             }
 
             if (titleLabel != null) titleLabel.text = task.Data.taskName;
-            if (instructionLabel != null) instructionLabel.text = task.Data.description;
+            if (descriptionLabel != null) descriptionLabel.text = GetDescription(task, owner);
+            string instruction = string.IsNullOrWhiteSpace(task.Data.instruction)
+                ? task.Data.description
+                : task.Data.instruction;
+            if (instructionLabel != null) instructionLabel.text = "<b>INSTRUCCIÓN</b>\n" + instruction;
             if (acceptLabel != null) acceptLabel.text = "ACEPTAR";
             if (rejectLabel != null) rejectLabel.text = "RECHAZAR";
+            ConfigureText(titleLabel, 16, 12, 16, FontStyle.Bold, TextAnchor.MiddleLeft);
+            ConfigureText(descriptionLabel, 13, 11, 13, FontStyle.Normal, TextAnchor.MiddleCenter);
+            ConfigureText(instructionLabel, 13, 11, 13, FontStyle.Normal, TextAnchor.MiddleCenter);
             gameObject.SetActive(true);
+        }
+
+        static string GetDescription(TaskInstance task, GameManager owner)
+        {
+            if (task.Data.taskId != "informe") return task.Data.description;
+            switch (owner.Days.CurrentDay)
+            {
+                case 1: return "Un cliente pide adelantar un proyecto para el viernes. El equipo ya tiene un ánimo raro por los nuevos sensores. ¿Qué haces?";
+                case 2: return "Un compañero pide tres días libres para cuidar a su gatito recién adoptado, que tiene problemas de salud. ¿Qué haces?";
+                case 3: return "Hay presupuesto para una de dos cosas: una pausa activa con sala de descanso o nuevos equipos para mejorar la asignación de tareas.";
+                case 4: return "Tomás te solicita un aumento de sueldo. Al parecer, los Churus han subido de precio en esta economía. ¿Qué haces?";
+                case 5: return "Quedan entregas pendientes para cerrar la semana. ¿Qué haces?";
+                default: return task.Data.description;
+            }
+        }
+
+        static void ConfigureText(Text label, int size, int minSize, int maxSize, FontStyle style, TextAnchor alignment)
+        {
+            if (label == null) return;
+            label.fontSize = size;
+            label.resizeTextForBestFit = true;
+            label.resizeTextMinSize = minSize;
+            label.resizeTextMaxSize = maxSize;
+            label.fontStyle = style;
+            label.alignment = alignment;
+            label.color = new Color(.1f, .08f, .18f, 1f);
+            label.horizontalOverflow = HorizontalWrapMode.Wrap;
+            label.verticalOverflow = VerticalWrapMode.Truncate;
         }
 
         static void SetButtonHoverState(Button button, Image background, Sprite hoverSprite)

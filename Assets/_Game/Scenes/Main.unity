@@ -226,7 +226,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   totalDays: 5
-  dayDuration: 45
+  dayDuration: 30
   quotaTarget: 60
 --- !u!114 &106
 MonoBehaviour:

@@ -73,10 +73,10 @@ namespace Caudal
                 cards.Add(Instantiate(taskCardPrefab, taskList, false));
             for (int i = 0; i < cards.Count; i++)
             {
-                cards[i].gameObject.SetActive(i < count);
                 if (i < count)
                 {
                     var task = game.Tasks.Tasks[i];
+                    cards[i].gameObject.SetActive(!task.IsFinal);
                     var rect = cards[i].transform as RectTransform;
                     Vector2 position = game.ActiveRole == CharacterRole.Boss ? bossTaskPositions[i % 3] : workerTaskPositions[i % 3];
                     rect.anchorMin = position;
@@ -85,6 +85,10 @@ namespace Caudal
                     rect.sizeDelta = new Vector2(310, 54);
                     cards[i].Bind(game, i, taskDecisionPanel);
                     cards[i].Refresh(task, i == game.Selected, false);
+                }
+                else
+                {
+                    cards[i].gameObject.SetActive(false);
                 }
             }
         }

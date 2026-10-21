@@ -17,7 +17,8 @@ MonoBehaviour:
   owner: 1
   affectedStat: 1
   category: 0
-  description: "Revisa las operaciones y detecta el c\xE1lculo incorrecto."
+  description: "Los n\xFAmeros no est\xE1n cuadrando y contabilidad asegura que todo est\xE1 perfecto. Alguien deber\xEDa revisar eso."
+  instruction: "Encuentra la operaci\xF3n que tiene el resultado incorrecto."
   difficulty: 1
   happinessCost: 5
   productivityReward: 5

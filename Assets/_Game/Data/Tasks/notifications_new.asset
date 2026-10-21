@@ -17,7 +17,8 @@ MonoBehaviour:
   owner: 0
   affectedStat: 0
   category: 0
-  description: Cierra los mensajes irrelevantes y conserva los importantes.
+  description: "\xA1No paran de llegar mensajes! Entre ofertas, reuniones y avisos, as\xED no hay quien trabaje tranquilo."
+  instruction: Cierra las notificaciones irrelevantes sin eliminar los mensajes importantes.
   difficulty: 1
   happinessCost: 5
   productivityReward: 5

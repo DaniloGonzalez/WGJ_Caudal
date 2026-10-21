@@ -54,7 +54,7 @@ namespace Caudal.Editor
                 game.Initialize(stats, days, tasks, root.GetComponent<InputRouter>());
                 game.Restart();
                 var dayConfig = new SerializedObject(days);
-                Check(Mathf.Approximately(dayConfig.FindProperty("dayDuration").floatValue, 45), "Global day lasts 45 seconds");
+                Check(Mathf.Approximately(dayConfig.FindProperty("dayDuration").floatValue, 30), "Global day lasts 30 seconds");
                 Check(Mathf.Approximately((float)typeof(TaskManager).GetField("waveDuration", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(tasks), 15),
                     "Each wave lasts 15 seconds");
 

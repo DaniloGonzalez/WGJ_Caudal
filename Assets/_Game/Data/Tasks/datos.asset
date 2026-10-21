@@ -17,7 +17,8 @@ MonoBehaviour:
   owner: 0
   affectedStat: 1
   category: 0
-  description: Conecta cada cable con su puerto del mismo color.
+  description: "\xBFPor qu\xE9 no prende mi PC?"
+  instruction: Conecta cada cable con su conector del mismo color.
   difficulty: 1
   happinessCost: 6
   productivityReward: 7

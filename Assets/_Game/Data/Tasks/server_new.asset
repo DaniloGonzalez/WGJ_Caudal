@@ -17,7 +17,8 @@ MonoBehaviour:
   owner: 0
   affectedStat: 1
   category: 0
-  description: Memoriza y repite la secuencia de colores para reiniciar el servidor.
+  description: "Se cay\xF3 el servidor otra vez. \xBFQui\xE9n fue el genio que dijo que reiniciarlo todo solucionaba los problemas?"
+  instruction: "Memoriza la secuencia de luces y rep\xEDtela en el mismo orden para reiniciar el servidor."
   difficulty: 1
   happinessCost: 5
   productivityReward: 5

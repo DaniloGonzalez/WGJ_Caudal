@@ -17,7 +17,8 @@ MonoBehaviour:
   owner: 0
   affectedStat: 0
   category: 0
-  description: "Arrastra cada objeto a su categor\xEDa correcta."
+  description: "Entre tantos papeles y tazas de caf\xE9, ya no encuentro ni el teclado."
+  instruction: "Arrastra cada objeto a su categor\xEDa correspondiente para despejar el escritorio."
   difficulty: 1
   happinessCost: 5
   productivityReward: 5

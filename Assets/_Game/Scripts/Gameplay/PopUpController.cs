@@ -99,7 +99,9 @@ public class PopUpController : MonoBehaviour
         if (placeholderContent != null) placeholderContent.SetActive(!hasMinigame);
 
         if (controlsText != null && hasMinigame && activeMinigame != null)
-            controlsText.text = activeMinigame.ControlsHint;
+            controlsText.text = string.IsNullOrWhiteSpace(task.Data.instruction)
+                ? activeMinigame.ControlsHint
+                : task.Data.instruction;
 
         ConfigureCompactLayout(hasMinigame);
         if (minigameContainer != null) minigameContainer.gameObject.SetActive(true);
@@ -172,9 +174,9 @@ public class PopUpController : MonoBehaviour
             {
                 float headerHeight = header != null ? header.sizeDelta.y : 42f;
                 float width = Mathf.Max(1f, window.rect.width - 20f);
-                bool detailedHint = activeMinigame.ControlsHint.Contains("\n");
-                float hintHeight = detailedHint ? 36f : 27f;
-                const float hintMargin = 10f;
+                bool detailedHint = controlsText != null && controlsText.text.Length > 90;
+                float hintHeight = detailedHint ? 62f : 44f;
+                const float hintMargin = 8f;
                 const float gap = 5f;
                 float top = window.rect.height * .5f - headerHeight - 10f;
                 float bottom = -window.rect.height * .5f + hintMargin + hintHeight + gap;
@@ -185,12 +187,12 @@ public class PopUpController : MonoBehaviour
 
             if (controlsText != null)
             {
-                bool detailedHint = activeMinigame.ControlsHint.Contains("\n");
-                controlsText.fontSize = detailedHint ? 13 : 15;
+                bool detailedHint = controlsText != null && controlsText.text.Length > 90;
+                controlsText.fontSize = detailedHint ? 16 : 17;
                 controlsText.resizeTextForBestFit = true;
-                controlsText.resizeTextMinSize = detailedHint ? 12 : 14;
-                controlsText.resizeTextMaxSize = detailedHint ? 14 : 15;
-        controlsText.color = Color.black;
+                controlsText.resizeTextMinSize = detailedHint ? 14 : 15;
+                controlsText.resizeTextMaxSize = detailedHint ? 16 : 17;
+                controlsText.color = Color.black;
                 controlsText.alignment = TextAnchor.MiddleCenter;
                 controlsText.horizontalOverflow = HorizontalWrapMode.Wrap;
                 controlsText.verticalOverflow = VerticalWrapMode.Truncate;

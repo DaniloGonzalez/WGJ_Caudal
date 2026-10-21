@@ -17,7 +17,8 @@ MonoBehaviour:
   owner: 1
   affectedStat: 1
   category: 0
-  description: "Coordina los pr\xF3ximos compromisos."
+  description: "Aprende a priorizar las necesidades del d\xEDa."
+  instruction: "Organiza las tareas seg\xFAn su prioridad: alta, media o baja."
   difficulty: 1
   happinessCost: 3
   productivityReward: 4
