@@ -21,15 +21,15 @@ MonoBehaviour:
     text: "\xA1Tarea resuelta! Vamos avanzando."
     duration: 3
   - trigger: 9
-    text: "Un pendiente menos para el equipo."
+    text: Un pendiente menos para el equipo.
     duration: 3
   - trigger: 10
     text: "Esto no sali\xF3 como esperaba. Tendr\xE9 que reorganizar el d\xEDa."
     duration: 3
   - trigger: 11
-    text: "Esta tarea puede esperar; prioricemos lo importante."
+    text: Esta tarea puede esperar; prioricemos lo importante.
     duration: 3
-  biography: "Hija de una doctora y de un ingeniero. Josefa es la mayor de una familia de profesionales y se le nota. En c\xF3mo habla, c\xF3mo camina y se mueve. Precisa, correcta y emocionalmente estable. Josefa sabe bien c\xF3mo manejar un equipo y una empresa. "
+  biography: "\"R\xE1pida pero un poco ap\xE1tica. Josefa es la mayor de una familia de profesionales y se le nota. En c\xF3mo habla, c\xF3mo camina y se mueve. Precisa, correcta y emocionalmente estable. Josefa sabe bien c\xF3mo manejar un equipo y una empresa\""
   quotaBonusPercent: 0
   productivityBonusPercent: 15
   happinessCostReductionPercent: 0

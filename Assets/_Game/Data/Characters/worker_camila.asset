@@ -18,18 +18,18 @@ MonoBehaviour:
   speechClip: {fileID: 8300000, guid: 742ca086ebf494a559be95a23432d51f, type: 3}
   dialogueLines:
   - trigger: 9
-    text: "Listo, un pendiente menos."
+    text: Listo, un pendiente menos.
     duration: 3
   - trigger: 9
-    text: "Bien, ahora puedo seguir con lo que falta."
+    text: Bien, ahora puedo seguir con lo que falta.
     duration: 3
   - trigger: 10
     text: "No me result\xF3. Voy a tener que intentarlo de nuevo."
     duration: 3
   - trigger: 11
-    text: "Hoy no alcanzo a tomar eso; tengo que cuidar mis prioridades."
+    text: Hoy no alcanzo a tomar eso; tengo que cuidar mis prioridades.
     duration: 3
-  biography: "Tom\xE1s s\xF3lo quiere vivir una vida avanzando por el camino con la menor oposici\xF3n posible. No tiene grandes expectativas m\xE1s que vivir su d\xEDa a d\xEDa sin mucha confrontaci\xF3n. Lo \xFAnico que le importa, es no llegar taaaaaaaaaaaan tarde, para poder alimentar a su gatito."
+  biography: "\"Tom\xE1s s\xF3lo quiere vivir una vida avanzando por el camino con la menor oposici\xF3n posible. No tiene grandes expectativas m\xE1s que vivir su d\xEDa a d\xEDa sin confrontaci\xF3n. Lo \xFAnico que le importa, es no llegar taaaaan tarde, para poder alimentar a su gatito\""
   quotaBonusPercent: 0
   productivityBonusPercent: 0
   happinessCostReductionPercent: 20
