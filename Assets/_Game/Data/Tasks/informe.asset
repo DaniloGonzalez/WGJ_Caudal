@@ -13,17 +13,22 @@ MonoBehaviour:
   m_Name: informe
   m_EditorClassIdentifier: 
   taskId: informe
-  taskName: Preparar informe
-  description: Resume los resultados de la jornada.
+  taskName: Aprobar solicitudes
+  owner: 1
+  affectedStat: 0
+  category: 0
+  description: "Revisa cinco solicitudes y decide cu\xE1les aprobar."
   difficulty: 1
   happinessCost: 7
   productivityReward: 8
   quotaReward: 22
   assignmentTimeLimit: 10
   executionTimeLimit: 10
+  rejectionHappinessChange: 0
+  keepAfterFailure: 1
   requiresRefusalMinigame: 0
   taskArtwork: {fileID: 0}
-  minigameWindowBackground: {fileID: 21300000, guid: c1c7868addae944bc9f3198051ce966a, type: 3}
+  minigameWindowBackground: {fileID: 21300000, guid: 5f12821f125638b469a3d4cee52d996d, type: 3}
   bossMinigamePrefab: {fileID: 6214473207928996683, guid: 44685ac09c82bd54a92a91e1587f855d, type: 3}
-  workerMinigamePrefab: {fileID: 8926056083149900497, guid: a79de742f5b73dd4281094c9aa0907c8, type: 3}
+  workerMinigamePrefab: {fileID: 0}
   minigamePrefab: {fileID: 0}

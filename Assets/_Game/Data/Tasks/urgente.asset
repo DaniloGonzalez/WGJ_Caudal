@@ -13,17 +13,21 @@ MonoBehaviour:
   m_Name: urgente
   m_EditorClassIdentifier: 
   taskId: urgente
-  taskName: Solicitud especial
-  description: Responde a una solicitud insistente.
+  taskName: Resolver urgencia comercial
+  owner: 1
+  category: 2
+  description: "Atiende una petici\xF3n urgente de un cliente."
   difficulty: 1
   happinessCost: 6
   productivityReward: 7
   quotaReward: 20
   assignmentTimeLimit: 10
   executionTimeLimit: 20
+  rejectionHappinessChange: 5
+  keepAfterFailure: 1
   requiresRefusalMinigame: 1
   taskArtwork: {fileID: 0}
-  minigameWindowBackground: {fileID: 21300000, guid: 54c2776f66ef742a2ac5172da3934685, type: 3}
+  minigameWindowBackground: {fileID: 21300000, guid: 5f12821f125638b469a3d4cee52d996d, type: 3}
   bossMinigamePrefab: {fileID: 0}
   workerMinigamePrefab: {fileID: 0}
   minigamePrefab: {fileID: 0}

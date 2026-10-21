@@ -19,8 +19,8 @@ namespace Caudal
     }
     public sealed class InputRouter : MonoBehaviour
     {
-        public RoleKeys worker = new RoleKeys(Key.W, Key.S, Key.A, Key.D, Key.F, Key.G, Key.E);
-        public RoleKeys boss = new RoleKeys(Key.UpArrow, Key.DownArrow, Key.LeftArrow, Key.RightArrow, Key.Enter, Key.RightShift, Key.RightCtrl);
+        public RoleKeys worker = new RoleKeys(Key.UpArrow, Key.DownArrow, Key.LeftArrow, Key.RightArrow, Key.Enter, Key.None, Key.None);
+        public RoleKeys boss = new RoleKeys(Key.UpArrow, Key.DownArrow, Key.LeftArrow, Key.RightArrow, Key.Enter, Key.None, Key.None);
         public bool Pressed(Key key) => Keyboard.current != null && key != Key.None && Keyboard.current[key].wasPressedThisFrame;
     }
 }

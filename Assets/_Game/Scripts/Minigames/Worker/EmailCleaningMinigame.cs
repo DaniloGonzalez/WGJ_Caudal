@@ -1,10 +1,11 @@
 using Caudal;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
-public class EmailCleaningMinigame : TimedMinigame
+public class EmailCleaningMinigame : TimedMinigame, IPointerClickHandler
 {
-    public override string ControlsHint => "W/A/S/D: mover · F: borrar spam · G: salir";
+    public override string ControlsHint => "Haz clic en los correos marcados como SPAM para eliminarlos.";
     [SerializeField] private Image[] cards;
     [SerializeField] private Text[] labels;
     [SerializeField] private Sprite spamSprite;
@@ -27,39 +28,57 @@ public class EmailCleaningMinigame : TimedMinigame
         }
         for (int i = 0; i < cards.Length; i++)
         {
+            int column = i % 3;
+            bool topRow = i < 3;
+            float xMin = .08f + column * .31f;
+            float xMax = xMin + .22f;
+            cards[i].rectTransform.anchorMin = new Vector2(xMin, topRow ? .64f : .30f);
+            cards[i].rectTransform.anchorMax = new Vector2(xMax, topRow ? .82f : .48f);
             cards[i].gameObject.SetActive(true);
             labels[i].text = (isSpam[i] ? "SPAM" : "IMPORTANTE") + "\nCorreo " + (i + 1);
+            labels[i].gameObject.SetActive(true);
+            labels[i].raycastTarget = false;
+            labels[i].rectTransform.anchorMin = new Vector2(0, -.55f);
+            labels[i].rectTransform.anchorMax = new Vector2(1, -.05f);
+            labels[i].rectTransform.offsetMin = Vector2.zero;
+            labels[i].rectTransform.offsetMax = Vector2.zero;
+            labels[i].alignment = TextAnchor.MiddleCenter;
+            labels[i].fontSize = 12;
+            labels[i].resizeTextForBestFit = true;
+            labels[i].resizeTextMinSize = 10;
+            labels[i].resizeTextMaxSize = 12;
+            labels[i].horizontalOverflow = HorizontalWrapMode.Wrap;
+            labels[i].verticalOverflow = VerticalWrapMode.Truncate;
             cards[i].sprite = isSpam[i] ? spamSprite : importantSprite;
             cards[i].color = Color.white;
+            cards[i].raycastTarget = true;
         }
         selected = 0;
         ShowSelection();
     }
 
-    protected override void ReadInput()
+    public void OnPointerClick(PointerEventData eventData)
     {
-        int columns = 3;
-        if (PressedLeft) selected = selected % columns == 0 ? selected + columns - 1 : selected - 1;
-        if (PressedRight) selected = selected % columns == columns - 1 ? selected - columns + 1 : selected + 1;
-        if (PressedUp) selected = (selected + cards.Length - columns) % cards.Length;
-        if (PressedDown) selected = (selected + columns) % cards.Length;
-        selected = Mathf.Clamp(selected, 0, cards.Length - 1);
-
-        if (PressedConfirm && cards[selected].gameObject.activeSelf)
+        if (eventData.button != PointerEventData.InputButton.Left) return;
+        var target = eventData.pointerPressRaycast.gameObject != null ? eventData.pointerPressRaycast.gameObject.transform : eventData.pointerCurrentRaycast.gameObject?.transform;
+        if (target == null) return;
+        for (int i = 0; i < cards.Length; i++)
         {
-            if (!isSpam[selected])
-                AddError("Ese correo era importante.");
+            if (target != cards[i].transform && !target.IsChildOf(cards[i].transform)) continue;
+            if (!cards[i].gameObject.activeSelf) return;
+            selected = i;
+            if (!isSpam[i]) AddError("Ese correo era importante.");
             else
             {
-                cards[selected].gameObject.SetActive(false);
+                cards[i].gameObject.SetActive(false);
                 removedSpam++;
                 SetFeedback("Spam eliminado.");
                 MoveSelectionToAvailableCard();
-                if (removedSpam == cards.Length / 2)
-                    Finish(InteractionResult.Success);
+                if (removedSpam == cards.Length / 2) Finish(InteractionResult.Success);
             }
+            ShowSelection();
+            return;
         }
-        ShowSelection();
     }
 
     private void ShowSelection()

@@ -3,15 +3,18 @@ namespace Caudal
 {
     public enum GameState
     {
-        DayStart, Playing, DaySummary, GameOver, CharacterSelection
+        DayStart, StartScreen, IntroScreen, Playing, DaySummary, GameOver, CharacterSelection, Quitting
     }
     public sealed class GameManager : MonoBehaviour
     {
         [SerializeField] bool developmentSimulator = true;
-        [SerializeField] float missedQuotaProductivityPenalty = 5, endingLow = 40, endingHigh = 60;
+        const float endingThreshold = 50f;
         [SerializeField] CharacterData[] workerCharacters;
         [SerializeField] CharacterData[] bossCharacters;
         int workerIndex, bossIndex;
+        int roleSelection;
+        int inputTransitionFrame = -1;
+        public CharacterRole ActiveRole => roleSelection == 0 ? CharacterRole.Boss : CharacterRole.Worker;
         public bool WorkerReady { get; private set; }
         public bool BossReady { get; private set; }
         public CharacterData WorkerCharacter => GetCharacter(false);
@@ -23,6 +26,7 @@ namespace Caudal
         public TaskManager Tasks { get; private set; }
         public InputRouter Input { get; private set; }
         public int Selected { get; private set; }
+        public bool NextDayBossSelected => roleSelection == 0;
         public TaskStrategy Strategy { get; private set; }
         public bool Simulator => developmentSimulator;
         public string ResultText { get; private set; } = "";
@@ -42,12 +46,55 @@ namespace Caudal
         public void Restart()
         {
             Tasks.EndDay();
+            Tasks.ClearTaskBoards();
             Tasks.SetCharacters(null, null);
             Stats.ResetStats();
             Days.ResetDays();
             workerIndex = bossIndex = 0;
+            roleSelection = 1;
             WorkerReady = BossReady = false;
             State = GameState.CharacterSelection;
+        }
+
+        public void ShowStartScreen()
+        {
+            Tasks.EndDay();
+            Tasks.ClearTaskBoards();
+            Tasks.SetCharacters(null, null);
+            Stats.ResetStats();
+            Days.ResetDays();
+            workerIndex = bossIndex = 0;
+            roleSelection = 1;
+            WorkerReady = BossReady = false;
+            State = GameState.StartScreen;
+        }
+
+        public void StartFromTitle()
+        {
+            if (State == GameState.StartScreen)
+            {
+                State = GameState.IntroScreen;
+                inputTransitionFrame = Time.frameCount;
+            }
+        }
+
+        public void ContinueFromIntro()
+        {
+            if (State == GameState.IntroScreen)
+            {
+                State = GameState.CharacterSelection;
+                inputTransitionFrame = Time.frameCount;
+            }
+        }
+
+        public void QuitGame()
+        {
+            State = GameState.Quitting;
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
         }
 
         CharacterData GetCharacter(bool boss)
@@ -74,11 +121,9 @@ namespace Caudal
 
         public void ConfirmCharacter(bool boss)
         {
-            if (State != GameState.CharacterSelection || GetCharacter(boss) == null) return;
-            if (boss) BossReady = true;
-            else WorkerReady = true;
-            if (!WorkerReady || !BossReady) return;
-
+            if (State != GameState.CharacterSelection || BossCharacter == null || WorkerCharacter == null) return;
+            roleSelection = boss ? 0 : 1;
+            WorkerReady = BossReady = true;
             Tasks.SetCharacters(WorkerCharacter, BossCharacter);
             BeginDay();
         }
@@ -86,27 +131,47 @@ namespace Caudal
         public void CancelCharacter(bool boss)
         {
             if (State != GameState.CharacterSelection) return;
-            if (boss) BossReady = false;
-            else WorkerReady = false;
+            roleSelection = boss ? 0 : 1;
+        }
+
+        public void SetSelectionRole(CharacterRole role)
+        {
+            if (State != GameState.CharacterSelection) return;
+            roleSelection = role == CharacterRole.Boss ? 0 : 1;
+        }
+
+        public void SelectTask(int index)
+        {
+            if (State != GameState.Playing || Tasks == null || index < 0 || index >= Tasks.Tasks.Count) return;
+            Selected = index;
+        }
+
+        public void SelectNextDayCharacter(bool boss)
+        {
+            if (State != GameState.DaySummary || Days.CurrentDay >= Days.TotalDays) return;
+            roleSelection = boss ? 0 : 1;
+        }
+
+        public void ContinueFromDaySummary()
+        {
+            if (State != GameState.DaySummary) return;
+            if (Days.CurrentDay >= Days.TotalDays)
+                ShowEnding();
+            else
+                BeginDay();
         }
 
         void ReadCharacterInput(bool boss)
         {
-            var keys = boss ? Input.boss : Input.worker;
-            if (Input.Pressed(keys.cancel))
-            {
-                CancelCharacter(boss);
-                return;
-            }
-            if (Input.Pressed(keys.left)) SelectCharacter(boss, -1);
-            if (Input.Pressed(keys.right)) SelectCharacter(boss, 1);
-            if (Input.Pressed(keys.confirm)) ConfirmCharacter(boss);
+            var keys = Input.boss;
+            if (Input.Pressed(keys.left) || Input.Pressed(keys.right)) roleSelection = 1 - roleSelection;
+            if (Input.Pressed(keys.confirm)) ConfirmCharacter(roleSelection == 0);
         }
 
         void BeginDay()
         {
             Days.StartDay();
-            Tasks.StartDay();
+            Tasks.StartWaveDay(ActiveRole);
             Selected = 0;
             Strategy = TaskStrategy.Normal;
             State = GameState.Playing;
@@ -118,9 +183,17 @@ namespace Caudal
             if (Input == null || State == GameState.DayStart)
                 return;
 
+            if (State == GameState.Quitting)
+                return;
+
+            if (Time.frameCount == inputTransitionFrame)
+                return;
+
+            if (State == GameState.StartScreen || State == GameState.IntroScreen)
+                return;
+
             if (State == GameState.CharacterSelection)
             {
-                ReadCharacterInput(false);
                 ReadCharacterInput(true);
                 return;
             }
@@ -131,112 +204,63 @@ namespace Caudal
                 return;
             }
 
+            if (Tasks.DayEnding)
+            {
+                if (!Tasks.HasActiveMinigame) CloseDay();
+                return;
+            }
+
+            // Las animaciones de cambio de oleada no consumen tiempo de jornada.
+            if (Tasks.WaveTransitionPending) return;
+
             if (Days.Tick(Time.deltaTime))
             {
-                CloseDay();
+                Tasks.EndWaveDay();
+                if (!Tasks.HasActiveMinigame) CloseDay();
                 return;
             }
 
             Tasks.Tick(Time.deltaTime);
-            ReadBossInput();
-            ReadWorkerInput();
+            // Durante la jornada, selección y decisiones se hacen desde la UI con el mouse.
         }
 
         void ReadContinueInput()
         {
-            if (!Input.Pressed(Input.boss.confirm) && !Input.Pressed(Input.worker.confirm))
+            if (State == GameState.Quitting)
                 return;
+
+            if (State == GameState.DaySummary)
+            {
+                if (Input.Pressed(Input.boss.left) || Input.Pressed(Input.boss.right))
+                    roleSelection = 1 - roleSelection;
+                if (Input.Pressed(Input.boss.confirm)) ContinueFromDaySummary();
+                return;
+            }
+
+            if (!Input.Pressed(Input.boss.confirm)) return;
 
             if (State == GameState.GameOver)
                 Restart();
-            else if (Days.CurrentDay >= Days.TotalDays)
-                ShowEnding();
-            else
-                BeginDay();
-        }
-
-        void ReadBossInput()
-        {
-            var keys = Input.boss;
-            if (Tasks.Assigning != null)
-            {
-                Simulate(Tasks.Assigning, InteractionKind.Assignment, keys);
-                return;
-            }
-
-            if (Input.Pressed(keys.up))
-                Selected--;
-            if (Input.Pressed(keys.down))
-                Selected++;
-            Selected = Mathf.Clamp(Selected, 0, Mathf.Max(0, Tasks.Tasks.Count - 1));
-
-            if (Input.Pressed(keys.alternate))
-            {
-                if (Strategy == TaskStrategy.Normal)
-                    Strategy = TaskStrategy.Pressure;
-                else
-                    Strategy = TaskStrategy.Normal;
-            }
-
-            if (Input.Pressed(keys.confirm))
-                Tasks.Assign(Selected, Strategy);
-        }
-
-        void ReadWorkerInput()
-        {
-            var keys = Input.worker;
-            // Cada pulsación hace una sola cosa: resolver, aceptar o rechazar.
-            if (Tasks.Active != null)
-            {
-                Simulate(Tasks.Active, InteractionKind.Execution, keys);
-                return;
-            }
-
-            if (Tasks.Pending != null && Tasks.Pending.Refusing)
-            {
-                Simulate(Tasks.Pending, InteractionKind.Refusal, keys);
-                return;
-            }
-
-            if (Input.Pressed(keys.confirm))
-                Tasks.Accept();
-            else if (Input.Pressed(keys.cancel))
-                Tasks.Reject();
-        }
-
-        void Simulate(TaskInstance task, InteractionKind kind, RoleKeys keys)
-        {
-            if (!developmentSimulator || task.Data.GetMinigamePrefab(kind) != null)
-                return;
-
-            if (Input.Pressed(keys.confirm))
-                Tasks.Resolve(task.Id, task.Day, kind, InteractionResult.Success);
-            else if (Input.Pressed(keys.cancel))
-                Tasks.Resolve(task.Id, task.Day, kind, InteractionResult.Failure);
         }
 
         void CloseDay()
         {
             Tasks.EndDay();
-            bool met = Days.CloseDay();
-            if (!met)
-                Stats.Apply(0, -missedQuotaProductivityPenalty);
-            ResultText = $"DÍA {Days.CurrentDay} TERMINADO\n\nCuota: {Days.QuotaProgress:0}/{Days.QuotaTarget:0} — {(met ? "Cumplida" : "Incumplida")}\nCompletadas: {Tasks.Count(TaskStatus.Completed)}  ·  Rechazadas: {Tasks.Count(TaskStatus.Rejected)}\nFallidas: {Tasks.Count(TaskStatus.Failed)}  ·  Expiradas: {Tasks.Count(TaskStatus.Expired)}\nFelicidad: {Stats.Happiness:0}  ·  Productividad: {Stats.Productivity:0}\n\nConfirmar para continuar";
-            ShowDialogue(met ? DialogueTrigger.DayQuotaMet : DialogueTrigger.DayQuotaMissed, CharacterRole.Boss);
+            Days.RecordClosingStats(Stats.Happiness, Stats.Productivity);
+            ResultText = $"DÍA {Days.CurrentDay} TERMINADO\n\nOleadas: {Tasks.WaveNumber}\nCompletadas: {Tasks.CompletedThisDay}  ·  Rechazadas: {Tasks.RejectedThisDay}  ·  Fallidas: {Tasks.FailedThisDay}  ·  Vencidas: {Tasks.ExpiredThisDay}\nBienestar: {Stats.Happiness:0}  ·  Productividad: {Stats.Productivity:0}\n\nEnter para continuar";
             State = GameState.DaySummary;
         }
 
         void HandleInteractionResolved(TaskInstance task, InteractionKind kind, InteractionResult result)
         {
-            if (task == null) return;
+            if (task == null || result == InteractionResult.Cancelled) return;
             bool success = result == InteractionResult.Success;
             DialogueTrigger trigger = kind switch
             {
-                InteractionKind.Assignment => success ? DialogueTrigger.AssignmentSuccess : DialogueTrigger.AssignmentFailure,
-                InteractionKind.Execution => success ? DialogueTrigger.ExecutionSuccess : DialogueTrigger.ExecutionFailure,
+                InteractionKind.Assignment or InteractionKind.Execution => success ? DialogueTrigger.TaskSuccess : DialogueTrigger.TaskFailure,
                 _ => success ? DialogueTrigger.RefusalSuccess : DialogueTrigger.RefusalFailure
             };
-            ShowDialogue(trigger, kind == InteractionKind.Assignment ? CharacterRole.Boss : CharacterRole.Worker);
+            ShowDialogue(trigger, task.Owner);
         }
 
         void ShowDialogue(DialogueTrigger trigger, CharacterRole defaultRole)
@@ -245,49 +269,42 @@ namespace Caudal
             if (speaker == null || speaker.dialogueLines == null)
                 return;
 
-            foreach (var line in speaker.dialogueLines)
-            {
-                if (line == null || line.trigger != trigger || string.IsNullOrWhiteSpace(line.text))
-                    continue;
+            var matchingLines = System.Array.FindAll(speaker.dialogueLines,
+                line => line != null && line.trigger == trigger && !string.IsNullOrWhiteSpace(line.text));
+            if (matchingLines.Length == 0) return;
 
-                float duration = Mathf.Max(1, line.duration);
-                OnDialogue?.Invoke(defaultRole, line.text, duration);
-                if (speaker.speechClip != null)
-                    AudioSource.PlayClipAtPoint(speaker.speechClip, Vector3.zero);
-                return;
-            }
+            var line = matchingLines[UnityEngine.Random.Range(0, matchingLines.Length)];
+            OnDialogue?.Invoke(defaultRole, line.text, Mathf.Max(1, line.duration));
+            if (Application.isPlaying && speaker.speechClip != null)
+                AudioSource.PlayClipAtPoint(speaker.speechClip, Vector3.zero);
         }
         void ShowEnding()
         {
+            // El final refleja el estado al cerrar el viernes, no el promedio semanal.
             float happiness = Stats.Happiness;
             float productivity = Stats.Productivity;
             string title, body;
-            if (happiness >= endingHigh && productivity >= endingHigh)
+            if (happiness >= endingThreshold && productivity >= endingThreshold)
             {
-                title = "Oficina ideal";
+                title = "Best Place to Work";
                 body = "Encontraron espacio para producir y cuidar a las personas.";
             }
-            else if (happiness <= endingLow && productivity >= endingHigh)
+            else if (happiness < endingThreshold && productivity >= endingThreshold)
             {
-                title = "Burnout del trabajador";
+                title = "Éxito miserable";
                 body = "Las metas se cumplieron, pero el bienestar quedó atrás.";
             }
-            else if (happiness >= endingHigh && productivity <= endingLow)
+            else if (happiness >= endingThreshold && productivity < endingThreshold)
             {
-                title = "Quiebra de la empresa";
+                title = "Oficina feliz en crisis";
                 body = "El bienestar no alcanzó para sostener la producción.";
-            }
-            else if (happiness <= endingLow && productivity <= endingLow)
-            {
-                title = "Colapso de la oficina";
-                body = "La oficina terminó sin energía y sin resultados.";
             }
             else
             {
-                title = "Sobrevivieron otra semana";
-                body = "Quedan decisiones por mejorar para encontrar el equilibrio.";
+                title = "Colapso de oficina";
+                body = "La oficina terminó sin energía y sin resultados.";
             }
-            ResultText = $"{title}\n\n{body}\n\nFelicidad {happiness:0} · Productividad {productivity:0}\nCuotas incumplidas: {Days.MissedQuotas}\n\nConfirmar para reiniciar";
+            ResultText = $"{title}\n\n{body}\n\nValores finales del viernes:\nBienestar: {happiness:0}\nProductividad: {productivity:0}\n\nClic para reiniciar";
             State = GameState.GameOver;
         }
     }

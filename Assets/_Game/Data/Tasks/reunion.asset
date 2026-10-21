@@ -13,17 +13,21 @@ MonoBehaviour:
   m_Name: reunion
   m_EditorClassIdentifier: 
   taskId: reunion
-  taskName: "Preparar reuni\xF3n"
-  description: "Re\xFAne los materiales del equipo."
+  taskName: "Preparar reuni\xF3n y documentos"
+  owner: 1
+  category: 0
+  description: "Ordena los documentos para la reuni\xF3n de la oficina."
   difficulty: 1
   happinessCost: 5
   productivityReward: 6
   quotaReward: 18
   assignmentTimeLimit: 10
-  executionTimeLimit: 20
+  executionTimeLimit: 10
+  rejectionHappinessChange: 0
+  keepAfterFailure: 1
   requiresRefusalMinigame: 0
   taskArtwork: {fileID: 0}
-  minigameWindowBackground: {fileID: 21300000, guid: 54c2776f66ef742a2ac5172da3934685, type: 3}
-  bossMinigamePrefab: {fileID: 0}
+  minigameWindowBackground: {fileID: 21300000, guid: 5f12821f125638b469a3d4cee52d996d, type: 3}
+  bossMinigamePrefab: {fileID: 3591686347956962850, guid: 97388d1330dd4b74e891eed58d5fd01c, type: 3}
   workerMinigamePrefab: {fileID: 0}
   minigamePrefab: {fileID: 0}

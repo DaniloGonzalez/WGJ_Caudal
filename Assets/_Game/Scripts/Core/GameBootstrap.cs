@@ -1,13 +1,9 @@
-using System.Collections;
 using UnityEngine;
 
 namespace Caudal
 {
     public sealed class GameBootstrap : MonoBehaviour
     {
-        [SerializeField] string teamName = "Caudal";
-        [SerializeField, Min(0)] float introDuration = 2f;
-        [SerializeField, Min(0.01f)] float fadeDuration = 0.5f;
         [Header("Objetos de Main")]
         [SerializeField] Camera sceneCamera;
         [SerializeField] Canvas sceneCanvas;
@@ -29,31 +25,43 @@ namespace Caudal
         AudioSource backgroundMusicSource;
         bool backgroundAudioStarted;
 
-        IEnumerator Start()
+        void Start()
         {
             if (sceneCamera == null || sceneCanvas == null || screen == null || intro == null)
             {
                 Debug.LogError("GameBootstrap: faltan referencias de la escena.", this);
-                yield break;
+                return;
             }
             gameManager.Initialize(statsManager, dayManager, taskManager, inputRouter);
             statsManager.ResetStats();
-            screen.Initialize(gameManager);
-            intro.Show(teamName);
-            yield return new WaitForSecondsRealtime(Mathf.Max(0, introDuration));
-            float duration = Mathf.Max(0.01f, fadeDuration);
-            for (float elapsed = 0; elapsed < duration; elapsed += Time.unscaledDeltaTime)
-            {
-                intro.SetAlpha(1 - elapsed / duration);
-                yield return null;
-            }
+            gameManager.ShowStartScreen();
+            intro.Initialize(gameManager);
             intro.Hide();
-            gameManager.Restart();
-            screen.Refresh();
+            screen.Initialize(gameManager);
         }
 
         void Update()
         {
+            if (gameManager == null || intro == null || gameManager.Input == null)
+                return;
+
+            if (gameManager.State == GameState.IntroScreen)
+            {
+                if (!intro.gameObject.activeSelf)
+                {
+                    intro.Show();
+                    return;
+                }
+
+                if (gameManager.Input.Pressed(gameManager.Input.boss.confirm))
+                {
+                    intro.Hide();
+                    gameManager.ContinueFromIntro();
+                }
+            }
+            else if (intro.gameObject.activeSelf)
+                intro.Hide();
+
             if (backgroundAudioStarted || gameManager == null || gameManager.State != GameState.Playing)
                 return;
 

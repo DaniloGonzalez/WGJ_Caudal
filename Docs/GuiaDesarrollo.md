@@ -2,11 +2,17 @@
 
 Guía unificada de UI, minijuegos, integración y seguimiento. Actualizada el 18-10-2026. Sustituye las cuatro guías anteriores; no contiene reportes ni capturas de validación.
 
+> **Addendum de continuidad — 2026-10-20:** esta guía conserva detalles técnicos útiles, pero varias descripciones posteriores reflejan el prototipo anterior de dos jugadores. Para el estado actual, leer primero `00_LEEME.md`, `01_GDD_MVP.md`, `02_REWORK_ALCANCE_Y_ETAPAS.md` y `04_REGLAS_PARA_EL_AGENTE.md`. La dirección actual es single-player: Josefa/Tomás son protagonistas fijos, se elige libremente uno por jornada y ambos comparten flechas + Enter. Las bandejas son independientes; no hay cadena jefe→trabajador. Las secciones antiguas sobre tres perfiles por rol, doble confirmación, controles separados por jugador y asignación del jefe describen el estado histórico, no el flujo actual.
+
+> **Addendum de UI — 2026-10-20:** el rework actual de Game Screen (oficinas apiladas, tarjetas flotantes, selección por mouse, botones de aceptar/rechazar y popup centrado) está documentado en `06_REWORK_PANTALLA_JUEGO.md`. Las tablas y capturas descritas más abajo para una lista vertical de tareas, estados de tarjeta, controles impresos y cuota visible son documentación del diseño anterior y no deben usarse como referencia de la UI actual.
+
+> Balance pendiente: Main usa cuota 60 frente a la referencia provisional 20 del GDD. La simulación y sus límites están registrados en `05_RESULTADOS_BALANCE_01.md`. No se cambiaron assets de balance ni se aprobaron valores definitivos. Las validaciones recientes se resumen en `00_LEEME.md`.
+
 ## Proyecto y responsabilidades
 
 Unity 6000.7.0b5. Escena principal: `Assets/_Game/Scenes/Main.unity`. Dos personas comparten un teclado: trabajador a la izquierda y jefe a la derecha.
 
-Flujo: intro → selección de personajes → jornada → resumen diario → siguiente jornada o final → nueva selección.
+Flujo: Start Screen → Intro Screen → selección de personaje → jornada → resumen diario → siguiente jornada o final → nueva selección.
 
 | Ubicación | Responsabilidad |
 |---|---|
@@ -25,11 +31,19 @@ Se mantiene código directo de game jam: estado, datos y presentación separados
 
 La cámara y el Canvas `Game UI` están guardados en Main. `GameBootstrap` conecta los sistemas y muestra la intro; `GameScreen` controla la visibilidad y actualización según el estado. Los scripts usan referencias del Inspector, sin reconstruir toda la interfaz al entrar en Play.
 
+### Pantalla de inicio aprobada
+
+La pantalla de inicio actual está aprobada visualmente. Su prefab es `Assets/_Game/Prefabs/UI/StartScreen.prefab` y sus componentes gráficos vienen de `Assets/_Game/Art/Screens/StartScreen/`. Aparece primero al abrir Main. Los controles son flechas arriba/abajo y Enter: el botón seleccionado muestra el sprite verde y el otro el azul; el foco también puede cambiarse con mouse. Jugar abre la Intro Screen; Salir cierra la aplicación y, dentro del Editor, detiene Play Mode.
+
+`StartScreenUI` conecta las referencias de los botones e imágenes desde el prefab. Para modificar textos o distribución, edita el prefab; para cambiar los estados visuales, reasigna los sprites `selectedSprite` e `idleSprite` en el Inspector. Conserva las acciones de `Play()` y `Exit()` y el estado `Quitting` en `GameManager`: Salir no debe redirigir a otra pantalla. Verificación registrada el 2026-10-20: Salir detiene Play Mode; Jugar avanza a `IntroScreen`. No se verificó el cierre de un ejecutable standalone.
+
+El `IntroPanel` utiliza `Assets/_Game/Prefabs/UI/IntroPanel.prefab` y las imágenes separadas de `Assets/_Game/Art/Screens/IntroScreen/`. El flujo es `Start Screen` → `Intro Screen` → selección: elegir Jugar muestra la intro, y el jugador continúa al hacer clic en la flecha o presionar Enter. No hay temporizador; la intro queda visible hasta la confirmación. La flecha es un `Button` y crece un 6% al pasar el puntero, volviendo a su tamaño al salir. El fondo y la flecha son `Image` con Preserve Aspect; el párrafo vive en el hijo `Message` como `Text` de Unity Legacy. Para cambiar su contenido, edita `IntroPanel.introMessage` en el Inspector; `messageLabel` conecta ese valor al objeto de texto al mostrar la intro. También se puede cambiar directamente el font y estilo en el hijo `Message`. Las imágenes tienen importación Sprite, `NPOT Scale=None` y mipmaps apagados para conservar sus dimensiones y proporciones. Verificación del 2026-10-20: la captura en Play a 1920×1080 mostró el fondo, mensaje y flecha; la validación confirmó hover, clic y el flujo y falló más adelante por una expectativa obsoleta de tres perfiles para cada rol.
+
 ### Prefabs
 
 | Prefab | Contenido y campos principales |
 |---|---|
-| `IntroPanel` | Rótulo, nombre del equipo y línea. `IntroPanel.teamLabel` y `group`; duración y fundido en `GameBootstrap`. |
+| `IntroPanel` | Fondo, párrafo editable y flecha de continuación. Edita `IntroPanel.introMessage` en el Inspector; clic en la flecha o Enter lleva a selección. El puntero agranda la flecha un 6%; no hay temporizador. |
 | `CharacterCard` | Retrato, rol, nombre, biografía, bonificaciones, controles e indicador `Ready`. `CharacterCard` recibe el perfil y las teclas de `CharacterData` e `InputRouter`. |
 | `CharacterSelection` | Título, instrucciones y dos tarjetas anidadas. En `CharacterSelectionUI`, asigna `workerCard` y `bossCard`. |
 | `TrabajadorPanel` | Imagen de oficina, retrato, solicitud y controles. En `TrabajadorHUD`, texto y retrato actualizados por el juego. |

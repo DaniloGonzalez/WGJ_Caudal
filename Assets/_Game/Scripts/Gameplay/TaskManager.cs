@@ -12,8 +12,16 @@ namespace Caudal
         [SerializeField] float pressureStressMultiplier = 2;
         [SerializeField] float failureStress = 2;
         [SerializeField, Min(2)] int backlogUrgencyThreshold = 2;
+        [SerializeField, Min(1)] int maxBacklogPerRole = 3;
+        [SerializeField, Min(0), Tooltip("Balance provisional: coste de Bienestar por una tarea necesaria que vence.")]
+        float missedTaskHappinessPenalty = 5;
+        [Header("Oleadas sincronizadas")]
+        [SerializeField, Min(1)] float waveDuration = 15f;
+        const float taskStatChange = 5f;
 
         readonly List<TaskInstance> tasks = new List<TaskInstance>();
+        readonly Dictionary<CharacterRole, List<TaskInstance>> taskBoards = new Dictionary<CharacterRole, List<TaskInstance>>();
+        readonly List<string> expiredTasksThisDay = new List<string>();
         int nextId;
         StatsManager stats;
         DayManager days;
@@ -21,6 +29,23 @@ namespace Caudal
         float productivityMultiplier = 1;
         float happinessCostMultiplier = 1;
         bool backlogDialogueShown;
+        CharacterRole activeRole;
+        bool waveMode, waveExpired;
+        bool waveTransitionPending, dayEnding;
+        int waveNumber;
+        float waveTimeRemaining;
+        public int FailedThisDay { get; private set; }
+        public int ExpiredThisDay { get; private set; }
+        public int InactiveCompletedThisDay { get; private set; }
+        public int CompletedThisDay { get; private set; }
+        public int RejectedThisDay { get; private set; }
+        public int WaveNumber => waveNumber;
+        public float WaveTimeRemaining => waveTimeRemaining;
+        public int WaveDifficulty => Mathf.Clamp(waveNumber, 1, 3);
+        public bool WaveTransitionPending => waveTransitionPending;
+        public bool DayEnding => dayEnding;
+        public bool HasActiveMinigame => Active != null;
+        public string ExpiredSummary => expiredTasksThisDay.Count == 0 ? "Ninguna" : string.Join(", ", expiredTasksThisDay);
 
         public void SetCharacters(CharacterData worker, CharacterData boss)
         {
@@ -41,9 +66,31 @@ namespace Caudal
         }
 
         public IReadOnlyList<TaskInstance> Tasks => tasks;
+        public int BacklogCount(CharacterRole role)
+        {
+            if (!taskBoards.TryGetValue(role, out var board)) return 0;
+            int count = 0;
+            foreach (var task in board)
+                if (!task.IsFinal) count++;
+            return count;
+        }
+
+        public string BacklogSummary(CharacterRole role)
+        {
+            if (!taskBoards.TryGetValue(role, out var board) || board.Count == 0) return "Sin pendientes";
+            var names = new List<string>();
+            foreach (var task in board)
+            {
+                if (task.IsFinal) continue;
+                string urgency = task.Age >= 2 ? " (crítica)" : task.Age == 1 ? " (urgente)" : "";
+                names.Add(task.Data.taskName + urgency);
+            }
+            return names.Count == 0 ? "Sin pendientes" : string.Join(", ", names);
+        }
         public TaskInstance Assigning { get; private set; }
         public TaskInstance Pending { get; private set; }
         public TaskInstance Active { get; private set; }
+        public float ProductivityMultiplier => productivityMultiplier;
         public string Message { get; private set; } = "";
         public int UnresolvedCount
         {
@@ -77,12 +124,140 @@ namespace Caudal
             this.days = days;
         }
 
-        public void StartDay()
+        public void StartDay() => StartDay(CharacterRole.Worker);
+
+        public void StartWaveDay(CharacterRole role)
         {
+            waveMode = true;
+            activeRole = role;
+            Assigning = Pending = Active = null;
+            tasks.Clear();
+            FailedThisDay = ExpiredThisDay = InactiveCompletedThisDay = 0;
+            CompletedThisDay = RejectedThisDay = 0;
+            expiredTasksThisDay.Clear();
+            waveNumber = 1;
+            waveTimeRemaining = waveDuration;
+            waveExpired = waveTransitionPending = dayEnding = false;
+            Message = "Resuelve las tres tareas de la oleada.";
+            CreateWave();
+        }
+
+        void CreateWave()
+        {
+            tasks.Clear();
+            var templates = new List<TaskData>();
+            var minigames = new HashSet<GameObject>();
+            foreach (var data in catalog)
+            {
+                if (data == null || data.owner != activeRole) continue;
+                var prefab = data.GetMinigamePrefab(activeRole);
+                if (prefab == null || !minigames.Add(prefab)) continue;
+                templates.Add(data);
+            }
+
+            if (templates.Count != 3)
+            {
+                Debug.LogError($"TaskManager: se esperaban 3 minijuegos para {activeRole}, se encontraron {templates.Count}.", this);
+                return;
+            }
+
+            for (int i = 0; i < templates.Count; i++)
+                tasks.Add(new TaskInstance(++nextId, days.CurrentDay, templates[i], 0, waveNumber));
+        }
+
+        public bool BeginNextWave()
+        {
+            if (!waveTransitionPending || dayEnding) return false;
+            waveNumber++;
+            waveTimeRemaining = waveDuration;
+            waveExpired = false;
+            CreateWave();
+            return tasks.Count == 3;
+        }
+
+        public void FinishWaveTransition()
+        {
+            if (!dayEnding) waveTransitionPending = false;
+        }
+
+        void RequestWaveTransition()
+        {
+            if (waveMode && !dayEnding) waveTransitionPending = true;
+        }
+
+        bool AllWaveTasksFinal()
+        {
+            if (tasks.Count == 0) return false;
+            foreach (var task in tasks)
+                if (!task.IsFinal) return false;
+            return true;
+        }
+
+        void ApplyTaskStat(TaskInstance task, float amount)
+        {
+            if (task.Data.affectedStat == TaskStat.Happiness) stats.Apply(amount, 0);
+            else stats.Apply(0, amount);
+        }
+
+        void FailAvailableWaveTasks()
+        {
+            foreach (var task in tasks)
+            {
+                if (task.IsFinal || task == Active) continue;
+                task.Status = TaskStatus.Expired;
+                ExpiredThisDay++;
+                expiredTasksThisDay.Add(task.Data.taskName);
+                ApplyTaskStat(task, -taskStatChange);
+            }
+        }
+
+        public void EndWaveDay()
+        {
+            if (!waveMode || dayEnding) return;
+            dayEnding = true;
+            waveTransitionPending = false;
+            waveTimeRemaining = 0;
+            FailAvailableWaveTasks();
+            Message = "Jornada terminada.";
+        }
+
+        public void StartDay(CharacterRole role)
+        {
+            waveMode = false;
+            waveTransitionPending = dayEnding = waveExpired = false;
+            activeRole = role;
             Assigning = null;
             Pending = null;
             Active = null;
             tasks.Clear();
+            FailedThisDay = 0;
+            ExpiredThisDay = 0;
+            InactiveCompletedThisDay = 0;
+            CompletedThisDay = RejectedThisDay = 0;
+            expiredTasksThisDay.Clear();
+            if (!taskBoards.TryGetValue(role, out var board))
+            {
+                board = new List<TaskInstance>();
+                taskBoards.Add(role, board);
+            }
+            for (int i = board.Count - 1; i >= 0; i--)
+            {
+                var task = board[i];
+                if (task.IsFinal)
+                {
+                    board.RemoveAt(i);
+                    continue;
+                }
+                if (task.Age > 2)
+                {
+                    ExpireTask(task);
+                    continue;
+                }
+                task.Day = days.CurrentDay;
+                if (task.Status == TaskStatus.InProgress || task.Status == TaskStatus.Failed)
+                    task.Status = TaskStatus.Available;
+                tasks.Add(task);
+            }
             backlogDialogueShown = false;
             Message = "Selecciona una tarea para comenzar.";
 
@@ -92,22 +267,67 @@ namespace Caudal
             {
                 if (data == null)
                     continue;
+                if (data.owner != role)
+                    continue;
                 string id = string.IsNullOrEmpty(data.taskId) ? data.name : data.taskId;
-                if (ids.Add(id))
+                bool alreadyOnBoard = false;
+                foreach (var task in tasks)
+                    if (task.Data == data) { alreadyOnBoard = true; break; }
+                if (!alreadyOnBoard && ids.Add(id))
                     available.Add(data);
             }
 
             // Sacamos cada elegida de la bolsa para no repetirla ese día.
-            while (tasks.Count < tasksPerDay && available.Count > 0)
+            int boardLimit = Mathf.Min(tasksPerDay, maxBacklogPerRole);
+            while (tasks.Count < boardLimit && available.Count > 0)
             {
                 int index = UnityEngine.Random.Range(0, available.Count);
-                tasks.Add(new TaskInstance(++nextId, days.CurrentDay, available[index]));
+                var task = new TaskInstance(++nextId, days.CurrentDay, available[index]);
+                tasks.Add(task);
+                board.Add(task);
                 available.RemoveAt(index);
             }
         }
 
+        public bool StartOwnTask(int index)
+        {
+            if (Active != null || dayEnding || waveTransitionPending || index < 0 || index >= tasks.Count) return false;
+            var task = tasks[index];
+            if (task.Owner != activeRole || task.Status != TaskStatus.Available) return false;
+            Active = task;
+            task.Status = TaskStatus.InProgress;
+            task.Remaining = task.Data.executionTimeLimit;
+            Message = "Resolviendo tarea.";
+            OnInteractionStarted?.Invoke(task, InteractionKind.Execution);
+            return true;
+        }
+
+        public bool RejectOwnTask(int index)
+        {
+            if (Active != null || dayEnding || waveTransitionPending || index < 0 || index >= tasks.Count) return false;
+            var task = tasks[index];
+            if (task.Owner != activeRole || task.Status != TaskStatus.Available) return false;
+            if (waveMode)
+            {
+                task.Status = TaskStatus.Rejected;
+                RejectedThisDay++;
+                ApplyTaskStat(task, -taskStatChange);
+                Message = "Tarea rechazada.";
+                if (AllWaveTasksFinal()) RequestWaveTransition();
+                return true;
+            }
+            task.Status = task.Data.category == TaskCategory.Required ? TaskStatus.Available : TaskStatus.Rejected;
+            if (task.Data.rejectionHappinessChange != 0)
+                stats.Apply(task.Data.rejectionHappinessChange, 0);
+            Message = task.Data.category == TaskCategory.Required
+                ? "La obligación queda pendiente."
+                : "Tarea rechazada.";
+            return true;
+        }
+
         public bool Assign(int index, TaskStrategy strategy)
         {
+            if (waveMode) return false;
             if (Assigning != null || Pending != null)
                 return false;
             if (index < 0 || index >= tasks.Count)
@@ -165,6 +385,33 @@ namespace Caudal
         // Entrada para el simulador y los futuros minijuegos.
         public bool Resolve(int id, int day, InteractionKind kind, InteractionResult result)
         {
+            if (waveMode)
+            {
+                var waveTask = Active;
+                if (kind != InteractionKind.Execution || waveTask == null || waveTask.Id != id ||
+                    waveTask.Day != day || waveTask.IsFinal) return false;
+
+                Active = null;
+                bool success = result == InteractionResult.Success;
+                waveTask.Status = success ? TaskStatus.Completed : TaskStatus.Failed;
+                if (success)
+                {
+                    CompletedThisDay++;
+                    ApplyTaskStat(waveTask, taskStatChange);
+                    Message = "Tarea completada.";
+                }
+                else
+                {
+                    FailedThisDay++;
+                    ApplyTaskStat(waveTask, -taskStatChange);
+                    Message = "Tarea incumplida.";
+                }
+
+                OnInteractionResolved?.Invoke(waveTask, kind, result);
+                if (!dayEnding && (waveExpired || AllWaveTasksFinal())) RequestWaveTransition();
+                return true;
+            }
+
             TaskInstance task;
             switch (kind)
             {
@@ -228,9 +475,10 @@ namespace Caudal
             Active = null;
             if (result != InteractionResult.Success)
             {
-                task.Status = TaskStatus.Failed;
+                FailedThisDay++;
+                task.Status = task.Data.keepAfterFailure ? TaskStatus.Available : TaskStatus.Failed;
                 stats.Apply(-failureStress * happinessCostMultiplier, 0);
-                Message = "Tarea fallida. Sin producción.";
+                Message = task.Data.keepAfterFailure ? "Falló, pero puede intentarse de nuevo." : "Tarea fallida. Sin producción.";
                 return;
             }
 
@@ -243,8 +491,7 @@ namespace Caudal
             }
 
             task.Status = TaskStatus.Completed;
-            stats.Apply(-task.Data.happinessCost * stress * happinessCostMultiplier,
-                task.Data.productivityReward * reward * productivityMultiplier);
+            stats.Apply(-task.Data.happinessCost * stress * happinessCostMultiplier, 0);
             days.AddProduction(task.Data.quotaReward * reward * quotaMultiplier);
             Message = "Tarea completada. Producción registrada.";
         }
@@ -268,6 +515,21 @@ namespace Caudal
 
         public void Tick(float delta)
         {
+            if (waveMode)
+            {
+                if (dayEnding || waveTransitionPending || waveExpired) return;
+                waveTimeRemaining = Mathf.Max(0, waveTimeRemaining - delta);
+                if (waveTimeRemaining <= 0)
+                {
+                    waveExpired = true;
+                    FailAvailableWaveTasks();
+                    if (Active != null)
+                        Resolve(Active.Id, Active.Day, InteractionKind.Execution, InteractionResult.Failure);
+                    else
+                        RequestWaveTransition();
+                }
+                return;
+            }
             TickInteraction(Assigning, InteractionKind.Assignment, delta);
             TickInteraction(Active, InteractionKind.Execution, delta);
             if (Pending != null && Pending.Refusing)
@@ -285,15 +547,112 @@ namespace Caudal
 
         public void EndDay()
         {
+            if (waveMode)
+            {
+                EndWaveDay();
+                return;
+            }
+            var assigning = Assigning;
+            var active = Active;
+            var refusing = Pending != null && Pending.Refusing ? Pending : null;
             foreach (var task in tasks)
             {
-                if (!task.IsFinal && task.Status != TaskStatus.Available)
-                    task.Status = TaskStatus.Expired;
+                if (task.IsFinal)
+                {
+                    taskBoards[activeRole].Remove(task);
+                    continue;
+                }
+                task.Age++;
+                if (task.Age > 2) ExpireTask(task);
+                else task.Status = TaskStatus.Available;
             }
+            if (assigning != null) OnInteractionResolved?.Invoke(assigning, InteractionKind.Assignment, InteractionResult.Cancelled);
+            if (active != null) OnInteractionResolved?.Invoke(active, InteractionKind.Execution, InteractionResult.Cancelled);
+            if (refusing != null) OnInteractionResolved?.Invoke(refusing, InteractionKind.Refusal, InteractionResult.Cancelled);
             Assigning = null;
             Pending = null;
             Active = null;
             CheckBacklogUrgency();
+        }
+
+        void ExpireTask(TaskInstance task)
+        {
+            if (task == null || task.IsFinal) return;
+            task.Status = TaskStatus.Expired;
+            if (taskBoards.TryGetValue(task.Owner, out var board)) board.Remove(task);
+            ExpiredThisDay++;
+            string ownerName = task.Owner == CharacterRole.Boss ? "Josefa" : "Tomás";
+            expiredTasksThisDay.Add(task.Data.taskName + " (" + ownerName + ")");
+            if (task.Data.category == TaskCategory.Required && missedTaskHappinessPenalty > 0)
+                stats.Apply(-missedTaskHappinessPenalty, 0);
+            Message = "Tarea incumplida: " + task.Data.taskName + ".";
+        }
+
+        public void ClearTaskBoards()
+        {
+            waveMode = false;
+            waveExpired = waveTransitionPending = dayEnding = false;
+            waveNumber = 0;
+            waveTimeRemaining = 0;
+            tasks.Clear();
+            taskBoards.Clear();
+            expiredTasksThisDay.Clear();
+            ExpiredThisDay = 0;
+            FailedThisDay = 0;
+            InactiveCompletedThisDay = 0;
+            CompletedThisDay = RejectedThisDay = 0;
+            Assigning = null;
+            Pending = null;
+            Active = null;
+        }
+
+        public string ResolveInactiveRole(CharacterRole role)
+        {
+            if (waveMode)
+                return role == CharacterRole.Boss
+                    ? "Josefa no recibió tareas durante esta jornada."
+                    : "Tomás no recibió tareas durante esta jornada.";
+
+            if (!taskBoards.TryGetValue(role, out var board))
+            {
+                board = new List<TaskInstance>();
+                taskBoards.Add(role, board);
+            }
+
+            TaskInstance task = null;
+            foreach (var item in board)
+                if (!item.IsFinal) { task = item; break; }
+            if (task == null)
+            {
+                var candidates = new List<TaskData>();
+                foreach (var data in catalog)
+                    if (data != null && data.owner == role) candidates.Add(data);
+                if (candidates.Count == 0) return role == CharacterRole.Boss ? "Josefa no tenía tareas disponibles." : "Tomás no tenía tareas disponibles.";
+                task = new TaskInstance(++nextId, days.CurrentDay, candidates[UnityEngine.Random.Range(0, candidates.Count)]);
+                board.Add(task);
+            }
+
+            task.ResolvedAutomatically = true;
+            bool success = stats.Productivity >= 35 && stats.Happiness >= 30 && UnityEngine.Random.value > .25f;
+            string actor = role == CharacterRole.Boss ? "Josefa" : "Tomás";
+            if (success)
+            {
+                task.Status = TaskStatus.Completed;
+                InactiveCompletedThisDay++;
+                stats.Apply(-task.Data.happinessCost * .5f, 0);
+                days.AddProduction(task.Data.quotaReward * .5f * quotaMultiplier);
+                board.Remove(task);
+                return actor + " avanzó: " + task.Data.taskName + ".";
+            }
+
+            task.Age++;
+            if (task.Age > 2)
+            {
+                ExpireTask(task);
+                return actor + " dejó incumplida: " + task.Data.taskName + ".";
+            }
+            task.Status = TaskStatus.Available;
+            return actor + " dejó pendiente: " + task.Data.taskName + (task.Age == 2 ? " (crítica)." : " (urgente).");
         }
 
         static bool IsUnresolved(TaskInstance task) => task.Status == TaskStatus.Assigning ||

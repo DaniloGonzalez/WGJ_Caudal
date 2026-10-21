@@ -4,9 +4,8 @@ using System.Reflection;
 using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.LowLevel;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using Unity.Scripting.LifecycleManagement;
 
 namespace Caudal.Editor
@@ -16,7 +15,6 @@ namespace Caudal.Editor
     {
         const string PendingKey = "Caudal.SixMinigames.Pending";
         const string ResultKey = "Caudal.SixMinigames.Result";
-        static Keyboard keyboard;
         static Canvas canvas;
         static GameManager gameManager;
         static bool gameManagerWasEnabled;
@@ -71,23 +69,18 @@ namespace Caudal.Editor
                     throw new Exception("Faltan Canvas, GameManager o InputRouter.");
                 gameManager.enabled = false;
                 typeof(GameManager).GetProperty("State").GetSetMethod(true).Invoke(gameManager, new object[] { GameState.DayStart });
-                keyboard = InputSystem.AddDevice<Keyboard>();
-                keyboard.MakeCurrent();
-                EditorApplication.update += KeepKeyboardCurrent;
-
                 string[] names = { "MG_BOSS_01", "MG_BOSS_02", "MG_BOSS_03", "MG_WORKER_01", "MG_WORKER_02", "MG_WORKER_03" };
                 for (int i = 0; i < PrefabPaths.Length; i++)
                 {
                     await VerifySuccess(PrefabPaths[i], i);
                     await VerifyFailure(PrefabPaths[i], i);
                 }
-                await VerifyIndependentInput();
-                await VerifyPopupsTogether();
                 await VerifyTaskFlow(gameManager);
 
                 string report = "CAUDAL_SIX_MINIGAMES_PASSED (" + Screen.width + "x" + Screen.height + "):\n" +
                     string.Join("\n", names) +
-                    "\nÉxito y fracaso comprobados por mecánica.\nLos dos minijuegos completaron en popups simultáneos.\nTaskManager asignó y aceptó la tarea con los prefabs por rol.";
+                    "\nÉxito y fracaso comprobados por mecánica.\nControles: mouse y clic.\n" +
+                    "TaskManager abrió y resolvió una tarea propia por rol en secuencia.";
                 SessionState.SetString(ResultKey, report);
                 Debug.Log(report);
             }
@@ -98,19 +91,11 @@ namespace Caudal.Editor
             }
             finally
             {
-                EditorApplication.update -= KeepKeyboardCurrent;
-                if (keyboard != null && keyboard.added) InputSystem.RemoveDevice(keyboard);
-                keyboard = null;
                 if (gameManager != null) gameManager.enabled = gameManagerWasEnabled;
                 gameManager = null;
                 Application.runInBackground = oldBackground;
                 EditorApplication.isPlaying = false;
             }
-        }
-
-        static void KeepKeyboardCurrent()
-        {
-            if (keyboard != null && keyboard.added) keyboard.MakeCurrent();
         }
 
         static async Task VerifySuccess(string path, int index)
@@ -125,57 +110,59 @@ namespace Caudal.Editor
             {
                 case 0:
                     int[] documentColors = Field<int[]>(minigame, "documentColors");
+                    Image[] documents = Field<Image[]>(minigame, "documents");
+                    Image[] trays = Field<Image[]>(minigame, "trays");
                     for (int n = 0; n < 3; n++)
                     {
-                        await Press(Key.Enter);
-                        for (int j = 0; j < documentColors[n]; j++) await Press(Key.DownArrow);
-                        await Press(Key.Enter);
+                        await Click(minigame, documents[n]);
+                        await Click(minigame, trays[documentColors[n]]);
                     }
                     break;
                 case 1:
                     int[] priorities = Field<int[]>(minigame, "priorities");
+                    Image[] cards = Field<Image[]>(minigame, "cards");
+                    Text[] slots = Field<Text[]>(minigame, "slots");
                     for (int slot = 0; slot < 3; slot++)
                     {
                         int card = Array.IndexOf(priorities, slot);
-                        await MoveScheduleCard((ScheduleMinigame)minigame, card);
-                        await Press(Key.Enter);
-                        for (int j = 0; j < slot; j++) await Press(Key.DownArrow);
-                        await Press(Key.Enter);
+                        await Click(minigame, cards[card]);
+                        await Click(minigame, slots[slot].transform.parent.GetComponent<Image>());
                     }
                     break;
                 case 2:
                     bool[] approvals = Field<bool[]>(minigame, "shouldApprove");
+                    Image approve = Field<Image>(minigame, "approveCard");
+                    Image reject = Field<Image>(minigame, "rejectCard");
                     for (int n = 0; n < 5; n++)
                     {
-                        if (!approvals[n]) await Press(Key.LeftArrow);
-                        await Press(Key.Enter);
+                        await Click(minigame, approvals[n] ? approve : reject);
                     }
                     break;
                 case 3:
                     int[] connectorColors = Field<int[]>(minigame, "connectorColors");
+                    Image[] cables = Field<Image[]>(minigame, "cables");
+                    Image[] connectors = Field<Image[]>(minigame, "connectors");
                     for (int cable = 0; cable < 3; cable++)
                     {
-                        await MoveWireSelection((WireConnectionMinigame)minigame, cable);
-                        await Press(Key.F);
+                        await Click(minigame, cables[cable]);
                         int connector = Array.IndexOf(connectorColors, cable);
-                        await MoveWireSelection((WireConnectionMinigame)minigame, connector);
-                        await Press(Key.F);
+                        await Click(minigame, connectors[connector]);
                     }
                     break;
                 case 4:
                     bool[] spam = Field<bool[]>(minigame, "isSpam");
+                    Image[] emailCards = Field<Image[]>(minigame, "cards");
                     for (int i = 0; i < spam.Length; i++)
                     {
                         if (!spam[i]) continue;
-                        await MoveEmail((EmailCleaningMinigame)minigame, i);
-                        await Press(Key.F);
+                        await Click(minigame, emailCards[i]);
                     }
                     break;
                 case 5:
                     for (int n = 0; n < 3; n++)
                     {
                         SetField(minigame, "position", .5f);
-                        await Press(Key.F);
+                        await ClickAt(minigame, Field<RectTransform>(minigame, "track"));
                     }
                     break;
             }
@@ -203,45 +190,47 @@ namespace Caudal.Editor
                 int[] colors = Field<int[]>(minigame, "documentColors");
                 for (int i = 0; i < 3; i++)
                 {
-                    await Press(Key.Enter);
+                    Image[] documents = Field<Image[]>(minigame, "documents");
+                    Image[] trays = Field<Image[]>(minigame, "trays");
+                    await Click(minigame, documents[0]);
                     int wrong = (colors[0] + 1) % 3;
-                    for (int j = 0; j < wrong; j++) await Press(Key.DownArrow);
-                    await Press(Key.Enter);
+                    for (int j = 0; j < 3; j++) await Click(minigame, trays[wrong]);
                 }
             }
             else if (index == 2)
             {
-                bool[] approvals = Field<bool[]>(minigame, "shouldApprove");
+                    bool[] approvals = Field<bool[]>(minigame, "shouldApprove");
+                    Image approve = Field<Image>(minigame, "approveCard");
+                    Image reject = Field<Image>(minigame, "rejectCard");
                 for (int i = 0; i < 3; i++)
                 {
-                    if (approvals[i]) await Press(Key.LeftArrow);
-                    await Press(Key.Enter);
+                        await Click(minigame, approvals[i] ? reject : approve);
                 }
             }
             else if (index == 3)
             {
-                int[] colors = Field<int[]>(minigame, "connectorColors");
-                await Press(Key.F);
-                int wrong = Array.FindIndex(colors, value => value != 2);
-                await MoveWireSelection((WireConnectionMinigame)minigame, wrong);
-                for (int i = 0; i < 3; i++) await Press(Key.F);
+                    int[] colors = Field<int[]>(minigame, "connectorColors");
+                    Image[] cables = Field<Image[]>(minigame, "cables");
+                    Image[] connectors = Field<Image[]>(minigame, "connectors");
+                    await Click(minigame, cables[0]);
+                    int wrong = Array.FindIndex(colors, value => value != 0);
+                    for (int i = 0; i < 3; i++) await Click(minigame, connectors[wrong]);
             }
             else if (index == 4)
             {
                 bool[] spam = Field<bool[]>(minigame, "isSpam");
                 int firstImportant = Array.FindIndex(spam, value => !value);
                 int secondImportant = Array.FindIndex(spam, firstImportant + 1, value => !value);
-                await MoveEmail((EmailCleaningMinigame)minigame, firstImportant);
-                await Press(Key.F);
-                await MoveEmail((EmailCleaningMinigame)minigame, secondImportant);
-                await Press(Key.F);
+                    Image[] cards = Field<Image[]>(minigame, "cards");
+                    await Click(minigame, cards[firstImportant]);
+                    await Click(minigame, cards[secondImportant]);
             }
             else if (index == 5)
             {
                 for (int i = 0; i < 3; i++)
                 {
                     SetField(minigame, "position", 0f);
-                    await Press(Key.F);
+                    await ClickAt(minigame, Field<RectTransform>(minigame, "track"));
                 }
             }
             else
@@ -258,121 +247,44 @@ namespace Caudal.Editor
             await Frames();
         }
 
-        static async Task VerifyIndependentInput()
-        {
-            var boss = Create(PrefabPaths[2]);
-            var worker = Create(PrefabPaths[3]);
-            await Frames(2);
-            await Press(Key.Enter, Key.F);
-            int cable = Field<int>(worker.GetComponent<WireConnectionMinigame>(), "selectedCable");
-            int request = Field<int>(boss.GetComponent<ApprovalMinigame>(), "requestIndex");
-            int errors = Field<int>(boss.GetComponent<ApprovalMinigame>(), "ErrorCount");
-            Check(cable == 2 && (request > 0 || errors > 0), "Los controles simultáneos de ambos roles se interfirieron.");
-            UnityEngine.Object.Destroy(boss);
-            UnityEngine.Object.Destroy(worker);
-            await Frames();
-        }
-
-        static async Task VerifyPopupsTogether()
-        {
-            var informe = AssetDatabase.LoadAssetAtPath<TaskData>("Assets/_Game/Data/Tasks/informe.asset");
-            var popupPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Game/Prefabs/PopUp.prefab");
-            Check(informe != null && popupPrefab != null, "Falta un TaskData o PopUp.prefab.");
-
-            var bossTask = new TaskInstance(1001, 1, informe);
-            var workerTask = new TaskInstance(1002, 1, informe);
-            SetTaskRemaining(bossTask, 10);
-            SetTaskRemaining(workerTask, 10);
-            var spawner = UnityEngine.Object.FindAnyObjectByType<MinigameSpawner>();
-            Check(spawner != null, "No se encontró MinigameSpawner en Main.");
-            spawner.HandleInteractionStarted(bossTask, InteractionKind.Assignment);
-            spawner.HandleInteractionStarted(workerTask, InteractionKind.Execution);
-            var spawnedPopups = UnityEngine.Object.FindObjectsByType<PopUpController>();
-            Check(spawnedPopups.Length == 2, "MinigameSpawner no mantuvo un popup por jugador.");
-            var resolved = typeof(MinigameSpawner).GetMethod("HandleInteractionResolved", BindingFlags.Instance | BindingFlags.NonPublic);
-            resolved.Invoke(spawner, new object[] { bossTask, InteractionKind.Assignment, InteractionResult.Success });
-            resolved.Invoke(spawner, new object[] { workerTask, InteractionKind.Execution, InteractionResult.Success });
-            await Frames();
-
-            int bossResult = -1, workerResult = -1;
-            var bossObject = UnityEngine.Object.Instantiate(popupPrefab, canvas.transform, false);
-            var workerObject = UnityEngine.Object.Instantiate(popupPrefab, canvas.transform, false);
-            var bossPopup = bossObject.GetComponent<PopUpController>();
-            var workerPopup = workerObject.GetComponent<PopUpController>();
-            bossPopup.Setup(bossTask, InteractionKind.Assignment, informe.GetMinigamePrefab(InteractionKind.Assignment), value => bossResult = (int)value);
-            workerPopup.Setup(workerTask, InteractionKind.Execution, informe.GetMinigamePrefab(InteractionKind.Execution), value => workerResult = (int)value);
-            Check(bossObject.GetComponentInChildren<ApprovalMinigame>(true) != null && workerObject.GetComponentInChildren<CopierTimingMinigame>(true) != null,
-                "Cada rol no recibió su prefab específico dentro del popup.");
-            var bossRect = (RectTransform)bossObject.transform;
-            var workerRect = (RectTransform)workerObject.transform;
-            var canvasRect = canvas.transform as RectTransform;
-            bool portraitCanvas = canvasRect.rect.width < canvasRect.rect.height;
-            bool roleAreasMatch = portraitCanvas
-                ? Mathf.Approximately(bossRect.anchorMin.y, .52f) && Mathf.Approximately(workerRect.anchorMin.y, .03f)
-                : Mathf.Approximately(bossRect.anchorMin.x, .665f) && Mathf.Approximately(workerRect.anchorMin.x, .665f);
-            Check(roleAreasMatch, "Los popups concurrentes no respetan la zona asignada a cada rol.");
-            await Frames(2);
-
-            var approval = bossObject.GetComponentInChildren<ApprovalMinigame>(true);
-            bool[] decisions = Field<bool[]>(approval, "shouldApprove");
-            for (int i = 0; i < 5; i++)
-            {
-                if (!decisions[i]) await Press(Key.DownArrow);
-                await Press(Key.Enter);
-            }
-
-            var copier = workerObject.GetComponentInChildren<CopierTimingMinigame>(true);
-            for (int i = 0; i < 3; i++)
-            {
-                SetField(copier, "position", .5f);
-                await Press(Key.F);
-            }
-            Check(bossResult == (int)InteractionResult.Success && workerResult == (int)InteractionResult.Success,
-                "Los resultados simultáneos no llegaron a los callbacks de sus popups.");
-            await Frames(3);
-            Check(bossObject == null && workerObject == null,
-                "Alguno de los popups no cerró al resolver el minijuego.");
-        }
-
         static async Task VerifyTaskFlow(GameManager game)
         {
-            var data = AssetDatabase.LoadAssetAtPath<TaskData>("Assets/_Game/Data/Tasks/informe.asset");
-            var catalog = Field<List<TaskData>>(game.Tasks, "catalog");
-            var savedCatalog = new List<TaskData>(catalog);
-            int savedTaskCount = Field<int>(game.Tasks, "tasksPerDay");
+            var bossData = AssetDatabase.LoadAssetAtPath<TaskData>("Assets/_Game/Data/Tasks/informe.asset");
+            var workerData = AssetDatabase.LoadAssetAtPath<TaskData>("Assets/_Game/Data/Tasks/correo.asset");
             try
             {
-                catalog.Clear();
-                catalog.Add(data);
-                SetField(game.Tasks, "tasksPerDay", 1);
-                game.Tasks.StartDay();
-                Check(game.Tasks.Assign(0, TaskStrategy.Normal), "TaskManager no asignó la tarea de prueba.");
-                var task = game.Tasks.Assigning;
-                await Frames(2);
-                var bossPopup = UnityEngine.Object.FindAnyObjectByType<PopUpController>();
-                Check(bossPopup != null && bossPopup.GetComponentInChildren<ApprovalMinigame>(true) != null,
-                    "La asignación real no abrió MG_BOSS_03 dentro del popup.");
-                FinishMinigame(bossPopup.GetComponentInChildren<ApprovalMinigame>(true), InteractionResult.Success);
-                await Frames(3);
-                Check(game.Tasks.Pending == task && UnityEngine.Object.FindAnyObjectByType<PopUpController>() == null,
-                    "TaskManager no recibió el éxito de asignación del jefe.");
-
-                game.Tasks.Accept();
-                await Frames(2);
-                var workerPopup = UnityEngine.Object.FindAnyObjectByType<PopUpController>();
-                Check(workerPopup != null && workerPopup.GetComponentInChildren<CopierTimingMinigame>(true) != null,
-                    "La aceptación real no abrió MG_WORKER_03 dentro del popup.");
-                FinishMinigame(workerPopup.GetComponentInChildren<CopierTimingMinigame>(true), InteractionResult.Success);
-                await Frames(3);
-                Check(task.Status == TaskStatus.Completed && game.Days.QuotaProgress > 0 &&
-                    UnityEngine.Object.FindAnyObjectByType<PopUpController>() == null,
-                    "TaskManager no recibió el éxito del trabajador o dejó el popup abierto.");
+                Check(bossData != null && workerData != null, "Faltan tareas de prueba de ambos roles.");
+                foreach (TaskData data in new[] { bossData, workerData })
+                {
+                    var role = data.owner;
+                    game.Restart();
+                    game.ConfirmCharacter(role == CharacterRole.Boss);
+                    Check(game.State == GameState.Playing, "La perspectiva diaria no inició para " + role + ".");
+                    int taskIndex = -1;
+                    for (int i = 0; i < game.Tasks.Tasks.Count; i++)
+                        if (game.Tasks.Tasks[i].Data == data) { taskIndex = i; break; }
+                    Check(taskIndex >= 0 && game.Tasks.Tasks.Count == 3, "La tarea de prueba forma parte de su oleada para " + role + ".");
+                    var task = game.Tasks.Tasks[taskIndex];
+                    float happiness = game.Stats.Happiness;
+                    float productivity = game.Stats.Productivity;
+                    Check(game.Tasks.StartOwnTask(taskIndex), "Se puede iniciar una tarea de " + role + ".");
+                    await Frames(2);
+                    var popup = UnityEngine.Object.FindAnyObjectByType<PopUpController>();
+                    var minigame = popup != null ? popup.GetComponentInChildren<TimedMinigame>(true) : null;
+                    Check(minigame != null, "TaskManager no abrió el minijuego de " + role + " dentro del popup.");
+                    FinishMinigame(minigame, InteractionResult.Success);
+                    await Frames(3);
+                    float expectedHappiness = happiness + (data.affectedStat == TaskStat.Happiness ? 5 : 0);
+                    float expectedProductivity = productivity + (data.affectedStat == TaskStat.Productivity ? 5 : 0);
+                    Check(task.Status == TaskStatus.Completed && Mathf.Approximately(game.Stats.Happiness, expectedHappiness) &&
+                        Mathf.Approximately(game.Stats.Productivity, expectedProductivity) && game.Days.QuotaProgress == 0 &&
+                        UnityEngine.Object.FindAnyObjectByType<PopUpController>() == null,
+                        "El resultado de " + role + " no resolvió la tarea o dejó abierto el popup.");
+                    game.Tasks.EndWaveDay();
+                }
             }
             finally
             {
-                catalog.Clear();
-                catalog.AddRange(savedCatalog);
-                SetField(game.Tasks, "tasksPerDay", savedTaskCount);
                 game.Tasks.EndDay();
             }
         }
@@ -384,49 +296,30 @@ namespace Caudal.Editor
             return UnityEngine.Object.Instantiate(prefab, canvas.transform, false);
         }
 
-        static async Task MoveEmail(EmailCleaningMinigame game, int target)
+        static async Task Click(TimedMinigame minigame, Graphic target)
         {
-            int current = Field<int>(game, "selected");
-            int currentRow = current / 3, targetRow = target / 3;
-            if (currentRow != targetRow) await Press(targetRow > currentRow ? Key.S : Key.W);
-            int currentColumn = current % 3, targetColumn = target % 3;
-            int right = (targetColumn - currentColumn + 3) % 3;
-            int left = (currentColumn - targetColumn + 3) % 3;
-            Key key = right <= left ? Key.D : Key.A;
-            for (int i = 0; i < Mathf.Min(right, left); i++) await Press(key);
+            var eventData = new PointerEventData(EventSystem.current)
+            {
+                button = PointerEventData.InputButton.Left,
+                position = RectTransformUtility.WorldToScreenPoint(null, target.rectTransform.position)
+            };
+            eventData.pointerPressRaycast = new RaycastResult { gameObject = target.gameObject };
+            eventData.pointerCurrentRaycast = eventData.pointerPressRaycast;
+            ExecuteEvents.Execute<IPointerClickHandler>(minigame.gameObject, eventData, ExecuteEvents.pointerClickHandler);
+            await Frames(1);
         }
 
-        static async Task MoveScheduleCard(ScheduleMinigame game, int target)
+        static async Task ClickAt(TimedMinigame minigame, RectTransform target)
         {
-            Image[] cards = Field<Image[]>(game, "cards");
-            int selected = Field<int>(game, "selected");
-            var available = new List<int>();
-            for (int i = 0; i < cards.Length; i++)
-                if (cards[i] != null && cards[i].gameObject.activeSelf) available.Add(i);
-
-            int currentPosition = available.IndexOf(selected);
-            int targetPosition = available.IndexOf(target);
-            if (currentPosition < 0 || targetPosition < 0) return;
-            int down = (targetPosition - currentPosition + available.Count) % available.Count;
-            int up = (currentPosition - targetPosition + available.Count) % available.Count;
-            Key key = down <= up ? Key.DownArrow : Key.UpArrow;
-            for (int i = 0; i < Mathf.Min(down, up); i++) await Press(key);
-        }
-
-        static async Task MoveWireSelection(WireConnectionMinigame game, int target)
-        {
-            int current = Field<int>(game, "selected");
-            Key key = target > current ? Key.W : Key.S;
-            for (int i = 0; i < Mathf.Abs(target - current); i++) await Press(key);
-        }
-
-        static async Task Press(params Key[] keys)
-        {
-            keyboard.MakeCurrent();
-            InputSystem.QueueStateEvent(keyboard, new KeyboardState(keys));
-            await Frames(2);
-            InputSystem.QueueStateEvent(keyboard, new KeyboardState());
-            await Frames(2);
+            var eventData = new PointerEventData(EventSystem.current)
+            {
+                button = PointerEventData.InputButton.Left,
+                position = RectTransformUtility.WorldToScreenPoint(null, target.position)
+            };
+            eventData.pointerPressRaycast = new RaycastResult { gameObject = target.gameObject };
+            eventData.pointerCurrentRaycast = eventData.pointerPressRaycast;
+            ExecuteEvents.Execute<IPointerClickHandler>(minigame.gameObject, eventData, ExecuteEvents.pointerClickHandler);
+            await Frames(1);
         }
 
         static async Task Frames(int count = 1)

@@ -2,10 +2,11 @@ using System.Collections.Generic;
 using Caudal;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
-public class DocumentSortingMinigame : TimedMinigame
+public class DocumentSortingMinigame : TimedMinigame, IPointerClickHandler
 {
-    public override string ControlsHint => "←/→: mover · Enter: recoger y clasificar";
+    public override string ControlsHint => "Haz clic en un documento y luego en la bandeja de su color.";
     [SerializeField] private Image[] documents;
     [SerializeField] private Image[] trays;
     [SerializeField] private Sprite[] documentSprites;
@@ -28,6 +29,7 @@ public class DocumentSortingMinigame : TimedMinigame
             if (documentSprites != null && documentColors[i] < documentSprites.Length)
                 documents[i].sprite = documentSprites[documentColors[i]];
             documents[i].color = Color.white;
+            documents[i].raycastTarget = true;
             documents[i].gameObject.SetActive(true);
         }
         for (int i = 0; i < trays.Length; i++)
@@ -35,40 +37,51 @@ public class DocumentSortingMinigame : TimedMinigame
             if (traySprites != null && i < traySprites.Length)
                 trays[i].sprite = traySprites[i];
             trays[i].color = Color.white;
+            trays[i].raycastTarget = true;
         }
         selected = 0;
         ShowSelection();
     }
 
-    protected override void ReadInput()
+    public void OnPointerClick(PointerEventData eventData)
     {
-        if (PressedLeft) selected = Mathf.Max(0, selected - 1);
-        if (PressedRight) selected = Mathf.Min((carriedDocument < 0 ? remainingDocuments.Count : trays.Length) - 1, selected + 1);
-        if (PressedConfirm)
+        if (eventData.button != PointerEventData.InputButton.Left) return;
+        var target = eventData.pointerPressRaycast.gameObject != null ? eventData.pointerPressRaycast.gameObject.transform : eventData.pointerCurrentRaycast.gameObject?.transform;
+        if (target == null) return;
+
+        if (carriedDocument < 0)
         {
-            if (carriedDocument < 0)
-            {
-                if (remainingDocuments.Count == 0) return;
-                carriedDocument = remainingDocuments[selected];
-                selected = 0;
-                SetFeedback("Elige la bandeja del mismo color.");
-            }
-            else if (documentColors[carriedDocument] == selected)
-            {
-                documents[carriedDocument].gameObject.SetActive(false);
-                remainingDocuments.Remove(carriedDocument);
-                carriedDocument = -1;
-                selected = 0;
-                if (remainingDocuments.Count == 0) Finish(InteractionResult.Success);
-                else SetFeedback("Documento clasificado.");
-            }
-            else
-            {
-                selected = 0;
-                AddError("Bandeja equivocada.");
-            }
+            for (int i = 0; i < documents.Length; i++)
+                if (target == documents[i].transform || target.IsChildOf(documents[i].transform))
+                {
+                    if (!remainingDocuments.Contains(i)) return;
+                    carriedDocument = i;
+                    selected = 0;
+                    SetFeedback("Haz clic en la bandeja del mismo color.");
+                    ShowSelection();
+                    return;
+                }
         }
-        ShowSelection();
+        else
+        {
+            for (int i = 0; i < trays.Length; i++)
+                if (target == trays[i].transform || target.IsChildOf(trays[i].transform))
+                {
+                    if (documentColors[carriedDocument] != i)
+                    {
+                        AddError("Bandeja equivocada.");
+                        return;
+                    }
+                    documents[carriedDocument].gameObject.SetActive(false);
+                    remainingDocuments.Remove(carriedDocument);
+                    carriedDocument = -1;
+                    selected = 0;
+                    if (remainingDocuments.Count == 0) Finish(InteractionResult.Success);
+                    else SetFeedback("Documento clasificado.");
+                    ShowSelection();
+                    return;
+                }
+        }
     }
 
     private void ShowSelection()

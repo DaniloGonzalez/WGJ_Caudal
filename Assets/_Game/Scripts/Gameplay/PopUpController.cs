@@ -29,19 +29,14 @@ public class PopUpController : MonoBehaviour
         activeTask = task;
         activeKind = kind;
         var rootRect = (RectTransform)transform;
-        bool bossRole = kind == InteractionKind.Assignment;
-        bool portraitCanvas = Screen.width < Screen.height;
-        rootRect.anchorMin = portraitCanvas
-            ? new Vector2(.06f, bossRole ? .52f : .03f)
-            : new Vector2(.665f, bossRole ? .39f : .12f);
-        rootRect.anchorMax = portraitCanvas
-            ? new Vector2(.94f, bossRole ? .97f : .48f)
-            : new Vector2(.985f, bossRole ? .765f : .47f);
+        bool bossRole = task.Owner == CharacterRole.Boss;
+        rootRect.anchorMin = Vector2.zero;
+        rootRect.anchorMax = Vector2.one;
         rootRect.offsetMin = Vector2.zero;
         rootRect.offsetMax = Vector2.zero;
         Canvas.ForceUpdateCanvases();
         var overlay = GetComponent<Image>();
-        if (overlay != null) overlay.color = new Color(0, 0, 0, 0);
+        if (overlay != null) overlay.color = new Color(0, 0, 0, .38f);
         var window = transform.Find("Window");
         if (window != null)
         {
@@ -57,28 +52,38 @@ public class PopUpController : MonoBehaviour
                     : 410f / 250f;
                 float availableWidth = Mathf.Max(1, rootRect.rect.width * .98f);
                 float availableHeight = Mathf.Max(1, rootRect.rect.height * .96f);
-                float windowHeight = Mathf.Min(400f, availableHeight, availableWidth / aspect);
+                float windowHeight = Mathf.Min(660f, availableHeight * .9f, availableWidth * .9f / aspect);
+                windowRect.anchorMin = windowRect.anchorMax = new Vector2(.5f, .5f);
+                windowRect.pivot = new Vector2(.5f, .5f);
+                windowRect.anchoredPosition = Vector2.zero;
                 windowRect.sizeDelta = new Vector2(windowHeight * aspect, windowHeight);
                 panel.color = panel.sprite == null
                     ? bossRole ? new Color(.22f, .25f, .43f, .96f) : new Color(.16f, .34f, .31f, .96f)
                     : bossRole ? new Color(.96f, .96f, 1f, 1f) : new Color(.94f, 1f, .94f, 1f);
             }
         }
-        SetImageBackgroundAlpha("Header", bossRole
-            ? new Color(.96f, .62f, .28f, 1f)
-            : new Color(.32f, .65f, .95f, 1f));
+        SetImageBackgroundAlpha("Header", task.Data.minigameWindowBackground != null
+            ? Color.clear
+            : bossRole ? new Color(.96f, .62f, .28f, 1f) : new Color(.32f, .65f, .95f, 1f));
         SetImageBackgroundAlpha("MinigameContainer", Color.clear);
         SetImageBackgroundAlpha("MinigameContainer/EmptyMinigameState", Color.clear);
-        if (titleText != null) titleText.text = task.Data.taskName;
+        if (titleText != null)
+        {
+            titleText.text = task.Data.taskName;
+            titleText.color = Color.black;
+        }
         if (taskDescriptionText != null) taskDescriptionText.text = task.Data.description;
-        if (roleText != null) roleText.text = kind == InteractionKind.Assignment ? "JEFE · ASIGNACIÓN" : "TRABAJADOR · " + (kind == InteractionKind.Refusal ? "CONVERSACIÓN" : "TAREA");
+        if (roleText != null) roleText.text = (bossRole ? "JOSEFA" : "TOMÁS") + " · " + (kind == InteractionKind.Refusal ? "CONVERSACIÓN" : "TAREA");
         if (controlsText != null) controlsText.text = GetCompactControls(kind);
-        if (closeText != null) closeText.text = "CANCELAR";
+        if (closeText != null) closeText.text = "";
         onCompleteCallback = onComplete;
 
         bool hasMinigame = false;
         if (minigamePrefab != null && minigameContainer != null) {
             activeMinigameInstance = Instantiate(minigamePrefab, minigameContainer, false);
+
+            if (activeMinigameInstance.TryGetComponent<TimedMinigame>(out var timedMinigame))
+                timedMinigame.SetWaveDifficulty(task.Difficulty);
 
             if (activeMinigameInstance.TryGetComponent<IMinigame>(out var minigame))
             {
@@ -98,7 +103,17 @@ public class PopUpController : MonoBehaviour
 
         if (closeButton != null) {
             closeButton.onClick.RemoveAllListeners();
-            closeButton.onClick.AddListener(() => FinishMinigame(InteractionResult.Cancelled));
+            closeButton.onClick.AddListener(() => FinishMinigame(hasMinigame ? InteractionResult.Cancelled : InteractionResult.Success));
+        }
+        if (closeText != null)
+        {
+            closeText.text = hasMinigame ? "" : "RESOLVER";
+            closeText.gameObject.SetActive(!hasMinigame);
+        }
+        if (!hasMinigame && placeholderContent != null)
+        {
+            var hint = placeholderContent.GetComponentInChildren<Text>(true);
+            if (hint != null) hint.text = "Haz clic en RESOLVER para simular la tarea.";
         }
         RefreshTimer();
     }
@@ -139,7 +154,14 @@ public class PopUpController : MonoBehaviour
             if (timerText != null) timerText.gameObject.SetActive(false);
             if (timerFill != null) timerFill.gameObject.SetActive(false);
             if (controlsText != null) controlsText.gameObject.SetActive(true);
-            if (closeButton != null) closeButton.gameObject.SetActive(false);
+            if (closeButton != null)
+            {
+                SetRect(closeButton.transform as RectTransform, new Vector2(.92f, .91f), new Vector2(.99f, .99f), Vector2.zero, Vector2.zero);
+                var closeImage = closeButton.GetComponent<Image>();
+                if (closeImage != null) closeImage.color = Color.clear;
+                closeButton.gameObject.SetActive(true);
+            }
+            if (closeText != null) closeText.gameObject.SetActive(false);
 
             if (window != null && minigameContainer != null)
             {
@@ -163,7 +185,7 @@ public class PopUpController : MonoBehaviour
                 controlsText.resizeTextForBestFit = true;
                 controlsText.resizeTextMinSize = detailedHint ? 9 : 10;
                 controlsText.resizeTextMaxSize = detailedHint ? 10 : 12;
-                controlsText.color = new Color(.91f, .94f, .98f, 1f);
+        controlsText.color = Color.black;
                 controlsText.alignment = TextAnchor.MiddleCenter;
                 controlsText.horizontalOverflow = HorizontalWrapMode.Wrap;
                 controlsText.verticalOverflow = VerticalWrapMode.Truncate;
@@ -183,7 +205,7 @@ public class PopUpController : MonoBehaviour
             taskDescriptionText.resizeTextForBestFit = true;
             taskDescriptionText.resizeTextMinSize = 10;
             taskDescriptionText.resizeTextMaxSize = 12;
-            taskDescriptionText.color = new Color(.13f, .16f, .24f, 1f);
+            taskDescriptionText.color = Color.black;
             taskDescriptionText.alignment = TextAnchor.MiddleCenter;
             taskDescriptionText.horizontalOverflow = HorizontalWrapMode.Wrap;
             taskDescriptionText.verticalOverflow = VerticalWrapMode.Truncate;
@@ -195,7 +217,7 @@ public class PopUpController : MonoBehaviour
             roleText.fontSize = 12;
             roleText.resizeTextForBestFit = false;
             roleText.horizontalOverflow = HorizontalWrapMode.Overflow;
-            roleText.color = new Color(.13f, .16f, .24f, 1f);
+            roleText.color = Color.black;
         }
         if (timerText != null)
         {
@@ -203,7 +225,7 @@ public class PopUpController : MonoBehaviour
             timerText.alignment = TextAnchor.MiddleRight;
             timerText.fontSize = 12;
             timerText.resizeTextForBestFit = false;
-            timerText.color = new Color(.13f, .16f, .24f, 1f);
+            timerText.color = Color.black;
         }
         SetRect(minigameContainer, new Vector2(.5f, .5f), new Vector2(.5f, .5f), new Vector2(0, -48), new Vector2(320, 168));
         if (placeholderContent != null)
@@ -213,7 +235,7 @@ public class PopUpController : MonoBehaviour
         {
             controlsText.fontSize = 10;
             controlsText.resizeTextForBestFit = false;
-            controlsText.color = new Color(.13f, .16f, .24f, 1f);
+            controlsText.color = Color.black;
             controlsText.alignment = TextAnchor.MiddleCenter;
             controlsText.horizontalOverflow = HorizontalWrapMode.Wrap;
             controlsText.verticalOverflow = VerticalWrapMode.Truncate;
@@ -256,9 +278,7 @@ public class PopUpController : MonoBehaviour
         if (timerFill != null) timerFill.fillAmount = limit > 0 ? Mathf.Clamp01(remaining / limit) : 0;
     }
 
-    private static string GetCompactControls(InteractionKind kind) => kind == InteractionKind.Assignment
-        ? "Usa las flechas para elegir · Enter: confirmar"
-        : "Usa W / A / S / D para elegir · F: confirmar · G: salir";
+    private static string GetCompactControls(InteractionKind kind) => "Haz clic en los elementos para completar la tarea.";
 
     public void FinishMinigame(InteractionResult result)
     {
@@ -276,6 +296,7 @@ public class PopUpController : MonoBehaviour
     public void ClosePopUp() {
         finished = true;
         if (activeMinigame != null) activeMinigame.OnFinished -= FinishMinigame;
+        gameObject.SetActive(false);
         Destroy(gameObject);
     }
 }

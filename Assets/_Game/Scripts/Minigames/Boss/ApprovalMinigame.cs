@@ -1,10 +1,11 @@
 using Caudal;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
-public class ApprovalMinigame : TimedMinigame
+public class ApprovalMinigame : TimedMinigame, IPointerClickHandler
 {
-    public override string ControlsHint => "Evalúa la solicitud · ←/→ elegir · Enter confirmar";
+    public override string ControlsHint => "Lee cada solicitud y haz clic en Aprobar o Rechazar.";
     [SerializeField] private Text requestText;
     [SerializeField] private Text decisionText;
     [SerializeField] private Text progressText;
@@ -28,8 +29,8 @@ public class ApprovalMinigame : TimedMinigame
             requestBackground.color = new Color(.94f, .88f, .72f, 1f);
             requestBackground.preserveAspect = true;
         }
-        if (approveCard != null) approveCard.color = Color.white;
-        if (rejectCard != null) rejectCard.color = Color.white;
+        if (approveCard != null) { approveCard.color = Color.white; approveCard.raycastTarget = true; }
+        if (rejectCard != null) { rejectCard.color = Color.white; rejectCard.raycastTarget = true; }
         shouldApprove = new[] { true, true, true, false, false };
         requestTexts = new[]
         {
@@ -50,16 +51,18 @@ public class ApprovalMinigame : TimedMinigame
         ShowRequest();
     }
 
-    protected override void ReadInput()
+    public void OnPointerClick(PointerEventData eventData)
     {
-        if (PressedLeft || PressedRight)
-        {
-            decision = 1 - decision;
-            ShowDecision();
-        }
-        if (!PressedConfirm) return;
+        if (eventData.button != PointerEventData.InputButton.Left) return;
+        var target = eventData.pointerPressRaycast.gameObject != null ? eventData.pointerPressRaycast.gameObject.transform : eventData.pointerCurrentRaycast.gameObject?.transform;
+        if (target == null) return;
+        if (target == approveCard.transform || target.IsChildOf(approveCard.transform)) SubmitDecision(0);
+        else if (target == rejectCard.transform || target.IsChildOf(rejectCard.transform)) SubmitDecision(1);
+    }
 
-        bool correct = (decision == 0) == shouldApprove[requestIndex];
+    private void SubmitDecision(int choice)
+    {
+        bool correct = (choice == 0) == shouldApprove[requestIndex];
         if (correct)
         {
             SetFeedback("Decisión correcta.");
@@ -114,7 +117,7 @@ public class ApprovalMinigame : TimedMinigame
             requestText.resizeTextMaxSize = 14;
             requestText.fontStyle = FontStyle.Bold;
             requestText.alignment = TextAnchor.MiddleCenter;
-            requestText.color = new Color(.12f, .15f, .22f, 1f);
+            requestText.color = Color.black;
             requestText.horizontalOverflow = HorizontalWrapMode.Wrap;
             requestText.verticalOverflow = VerticalWrapMode.Truncate;
         }

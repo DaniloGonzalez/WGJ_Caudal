@@ -17,35 +17,17 @@ MonoBehaviour:
   portrait: {fileID: 2800000, guid: 46d1fb6d56c4906439460f431bea0bea, type: 3}
   speechClip: {fileID: 8300000, guid: 3efc50f1f74c64a08ab08d69e58c9be1, type: 3}
   dialogueLines:
-  - trigger: 1
-    text: "\xA1Otro d\xEDa en la oficina!\n"
+  - trigger: 9
+    text: "\xA1Tarea resuelta! Vamos avanzando."
     duration: 3
-  - trigger: 1
-    text: "\xA1No hay problema!\n"
+  - trigger: 9
+    text: "Un pendiente menos para el equipo."
     duration: 3
-  - trigger: 1
-    text: "Ojal\xE1 crezcamos como equipo\n"
+  - trigger: 10
+    text: "Esto no sali\xF3 como esperaba. Tendr\xE9 que reorganizar el d\xEDa."
     duration: 3
-  - trigger: 1
-    text: 'Aww mi jefa siempre sabe lo que necesitamos
-
-'
-    duration: 3
-  - trigger: 1
-    text: "Si te dan mucho trabajo, es porque conf\xEDan en ti\n"
-    duration: 3
-  - trigger: 1
-    text: 'Si quieres buenos resultados, el buen trabajo y un buen liderazgo son prioridad
-
-'
-    duration: 3
-  - trigger: 1
-    text: 'Aww mi jefa siempre sabe lo que necesitamos
-
-'
-    duration: 3
-  - trigger: 1
-    text: "\xA1Estoy listo!\n"
+  - trigger: 11
+    text: "Esta tarea puede esperar; prioricemos lo importante."
     duration: 3
   biography: "Hija de una doctora y de un ingeniero. Josefa es la mayor de una familia de profesionales y se le nota. En c\xF3mo habla, c\xF3mo camina y se mueve. Precisa, correcta y emocionalmente estable. Josefa sabe bien c\xF3mo manejar un equipo y una empresa. "
   quotaBonusPercent: 0

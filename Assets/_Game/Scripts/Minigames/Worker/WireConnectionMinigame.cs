@@ -1,10 +1,11 @@
 using Caudal;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
-public class WireConnectionMinigame : TimedMinigame
+public class WireConnectionMinigame : TimedMinigame, IPointerClickHandler
 {
-    public override string ControlsHint => "W/S: arriba/abajo · A/D no se usan.\nF: elegir cable y unir colores iguales · G: salir.";
+    public override string ControlsHint => "Haz clic en un cable y luego en el conector del mismo color.";
     [SerializeField] private Image[] cables;
     [SerializeField] private Image[] connectors;
     [SerializeField] private Image[] connectionLines;
@@ -35,6 +36,8 @@ public class WireConnectionMinigame : TimedMinigame
                 connectors[i].sprite = rightConnectorSprites[connectorColors[i]];
             cables[i].color = Color.white;
             connectors[i].color = Color.white;
+            cables[i].raycastTarget = true;
+            connectors[i].raycastTarget = true;
             connectionLines[i].gameObject.SetActive(false);
             cables[i].gameObject.SetActive(true);
             connectors[i].gameObject.SetActive(true);
@@ -43,39 +46,46 @@ public class WireConnectionMinigame : TimedMinigame
         ShowSelection();
     }
 
-    protected override void ReadInput()
+    public void OnPointerClick(PointerEventData eventData)
     {
-        int count = selectedCable < 0 ? cables.Length : connectors.Length;
-        // Los arreglos del prefab están serializados de abajo hacia arriba.
-        if (PressedUp) selected = Mathf.Min(count - 1, selected + 1);
-        if (PressedDown) selected = Mathf.Max(0, selected - 1);
-        if (PressedConfirm)
+        if (eventData.button != PointerEventData.InputButton.Left) return;
+        var target = eventData.pointerPressRaycast.gameObject != null ? eventData.pointerPressRaycast.gameObject.transform : eventData.pointerCurrentRaycast.gameObject?.transform;
+        if (target == null) return;
+        if (selectedCable < 0)
         {
-            if (selectedCable < 0)
-            {
-                selectedCable = selected;
-                selected = connectors.Length - 1;
-                SetFeedback("Elige el conector del mismo color.");
-            }
-            else if (!connected[selectedCable] && connectorColors[selected] == selectedCable)
-            {
-                connected[selectedCable] = true;
-                DrawConnection(selectedCable, selected);
-                cables[selectedCable].transform.localScale = Vector3.one * .9f;
-                connectors[selected].transform.localScale = Vector3.one * .9f;
-                selectedCable = -1;
-                selected = cables.Length - 1;
-                bool allConnected = true;
-                foreach (bool value in connected) allConnected &= value;
-                if (allConnected) Finish(InteractionResult.Success);
-                else SetFeedback("Cable conectado.");
-            }
-            else
-            {
-                AddError("Conector equivocado.");
-            }
+            for (int i = 0; i < cables.Length; i++)
+                if (target == cables[i].transform || target.IsChildOf(cables[i].transform))
+                {
+                    if (connected[i]) return;
+                    selectedCable = i;
+                    selected = connectors.Length - 1;
+                    SetFeedback("Haz clic en su conector del mismo color.");
+                    ShowSelection();
+                    return;
+                }
         }
-        ShowSelection();
+        else
+        {
+            for (int i = 0; i < connectors.Length; i++)
+                if (target == connectors[i].transform || target.IsChildOf(connectors[i].transform))
+                {
+                    if (connectorColors[i] != selectedCable)
+                    {
+                        AddError("Conector equivocado.");
+                        return;
+                    }
+                    connected[selectedCable] = true;
+                    DrawConnection(selectedCable, i);
+                    selectedCable = -1;
+                    selected = cables.Length - 1;
+                    bool allConnected = true;
+                    foreach (bool value in connected) allConnected &= value;
+                    if (allConnected) Finish(InteractionResult.Success);
+                    else SetFeedback("Cable conectado.");
+                    ShowSelection();
+                    return;
+                }
+        }
     }
 
     private void DrawConnection(int cable, int connector)

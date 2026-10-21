@@ -13,17 +13,21 @@ MonoBehaviour:
   m_Name: datos
   m_EditorClassIdentifier: 
   taskId: datos
-  taskName: Revisar datos
-  description: Comprueba los registros recibidos.
+  taskName: "Reparar conexi\xF3n de datos"
+  owner: 0
+  category: 0
+  description: Conecta cada cable con su puerto del mismo color.
   difficulty: 1
   happinessCost: 6
   productivityReward: 7
   quotaReward: 20
   assignmentTimeLimit: 10
-  executionTimeLimit: 20
+  executionTimeLimit: 10
+  rejectionHappinessChange: 0
+  keepAfterFailure: 1
   requiresRefusalMinigame: 0
   taskArtwork: {fileID: 0}
-  minigameWindowBackground: {fileID: 21300000, guid: 54c2776f66ef742a2ac5172da3934685, type: 3}
+  minigameWindowBackground: {fileID: 21300000, guid: 22d5f541d592b9b40b4fad0bfd955589, type: 3}
   bossMinigamePrefab: {fileID: 0}
-  workerMinigamePrefab: {fileID: 0}
+  workerMinigamePrefab: {fileID: 7737986671711358449, guid: 6bc5d4f29ef88f940b2c9f58c876d89c, type: 3}
   minigamePrefab: {fileID: 0}

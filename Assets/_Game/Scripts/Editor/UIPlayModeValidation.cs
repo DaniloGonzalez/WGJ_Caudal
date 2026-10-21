@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.LowLevel;
 using UnityEngine.SceneManagement;
@@ -94,8 +95,9 @@ namespace Caudal.Editor
             Check(card.GetComponentsInChildren<RawImage>(true).Single().texture == data.portrait,
                 "Character portrait: " + data.characterName);
             var texts = card.GetComponentsInChildren<Text>(true).Select(t => t.text).ToArray();
-            Check(texts.Contains(data.characterName) && texts.Contains(data.biography),
-                "Character name and biography: " + data.characterName);
+            string expectedName = data.role == CharacterRole.Boss ? "JOSEFA" : "TOMAS";
+            Check(texts.Contains(expectedName) && texts.Contains(data.biography),
+                "Fixed protagonist name and biography: " + expectedName);
         }
 
         static async Task SelectTask(GameManager game, int index)
@@ -132,45 +134,59 @@ namespace Caudal.Editor
                 var game = Find<GameManager>();
                 var canvas = Find<GameScreen>();
                 Check(game != null && canvas != null, "Scene systems present");
-                Check(Find<IntroPanel>().gameObject.activeInHierarchy && game.State == GameState.DayStart, "Intro visible");
+                Check(game.State == GameState.StartScreen && Find<StartScreenUI>().gameObject.activeInHierarchy &&
+                    !Find<IntroPanel>().gameObject.activeSelf, "Start screen appears first");
                 Check(Object.FindObjectsByType<Camera>(FindObjectsInactive.Include).Length == 1, "One camera in Play");
                 Check(Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include).Length == 1, "One Canvas in Play");
-                Check(canvas.transform.childCount == 7, "Seven panel instances, no duplicates");
-                double deadline = EditorApplication.timeSinceStartup + 10;
-                while (game.State == GameState.DayStart && EditorApplication.timeSinceStartup < deadline) await Frames();
+                var panels = new[] { "TrabajadorPanel", "JefePanel", "SharedHUD", "StatsGraph", "ResultsPanel", "CharacterSelection", "IntroPanel", "StartScreen", "TaskWindows", "TaskDecisionPanel" };
+                Check(canvas.transform.childCount == panels.Length && panels.All(name => canvas.transform.Find(name) != null),
+                    "Ten expected panel instances, no duplicates");
+                await Press(game.Input.boss.confirm);
                 await Frames();
-                Check(game.State == GameState.CharacterSelection && !Find<IntroPanel>().gameObject.activeSelf, "Intro transitions to selection");
+                Check(game.State == GameState.IntroScreen && Find<IntroPanel>().gameObject.activeInHierarchy &&
+                    !Find<StartScreenUI>().gameObject.activeSelf, "Confirming Play opens intro screen");
+                await Task.Delay(2500);
+                await Frames();
+                Check(game.State == GameState.IntroScreen && Find<IntroPanel>().gameObject.activeInHierarchy,
+                    "Intro waits for explicit confirmation without a timer");
+                var intro = Find<IntroPanel>();
+                var continueButton = intro.transform.Find("ContinueButton").GetComponent<Button>();
+                var hoverScale = continueButton.GetComponent<PointerHoverScale>();
+                var originalScale = continueButton.transform.localScale;
+                var eventSystem = Object.FindAnyObjectByType<EventSystem>();
+                Check(hoverScale != null && eventSystem != null, "Intro arrow has mouse hover and EventSystem");
+                var pointer = new PointerEventData(eventSystem) { button = PointerEventData.InputButton.Left };
+                ExecuteEvents.Execute(continueButton.gameObject, pointer, ExecuteEvents.pointerEnterHandler);
+                Check(continueButton.transform.localScale.x > originalScale.x, "Intro arrow grows on mouse hover");
+                ExecuteEvents.Execute(continueButton.gameObject, pointer, ExecuteEvents.pointerExitHandler);
+                Check(continueButton.transform.localScale == originalScale, "Intro arrow returns to its size when the pointer leaves");
+                ExecuteEvents.Execute(continueButton.gameObject, pointer, ExecuteEvents.pointerClickHandler);
+                await Frames();
+                Check(game.State == GameState.CharacterSelection && !Find<IntroPanel>().gameObject.activeSelf,
+                    "Clicking intro arrow opens character selection");
+                game.ShowStartScreen();
+                await Frames();
+                await Press(game.Input.boss.confirm);
+                await Press(game.Input.boss.confirm);
+                Check(game.State == GameState.CharacterSelection && !Find<IntroPanel>().gameObject.activeSelf,
+                    "Enter also continues from intro to character selection");
                 Check(game.Days.CurrentDay == 0 && game.Days.TimeRemaining == 0, "Selection clock stopped");
                 var selection = Find<CharacterSelectionUI>();
                 var workerCard = selection.transform.Find("TrabajadorCharacterCard").GetComponent<CharacterCard>();
                 var bossCard = selection.transform.Find("JefeCharacterCard").GetComponent<CharacterCard>();
-                var workers = new HashSet<CharacterData>();
-                var bosses = new HashSet<CharacterData>();
-                for (int i = 0; i < 3; i++)
-                {
-                    workers.Add(game.WorkerCharacter); bosses.Add(game.BossCharacter);
-                    ProfileVisible(workerCard, game.WorkerCharacter);
-                    ProfileVisible(bossCard, game.BossCharacter);
-                    await Press(game.Input.worker.down, game.Input.boss.down);
-                }
-                Check(workers.Count == 3 && bosses.Count == 3,
-                    "Three independent profiles per role using simultaneous input (worker: " + string.Join(", ", workers.Select(c => c.characterName)) +
-                    "; boss: " + string.Join(", ", bosses.Select(c => c.characterName)) + ")");
-                await Press(game.Input.worker.confirm);
-                Check(game.WorkerReady && !game.BossReady && game.State == GameState.CharacterSelection, "Worker ready waits for boss");
-                Check(workerCard.transform.Find("Ready").gameObject.activeSelf, "Ready indicator visible");
-                await Press(game.Input.worker.cancel);
-                Check(!game.WorkerReady, "Worker cancels readiness");
+                Check(game.CharacterCount(false) == 1 && game.CharacterCount(true) == 1,
+                    "Josefa and Tomás are the fixed protagonists");
+                ProfileVisible(workerCard, game.WorkerCharacter);
+                ProfileVisible(bossCard, game.BossCharacter);
                 await Press(game.Input.boss.confirm);
-                Check(game.BossReady && !game.WorkerReady && game.State == GameState.CharacterSelection, "Boss ready waits for worker");
-                await Press(game.Input.worker.confirm);
-                Check(game.State == GameState.Playing && game.Days.CurrentDay == 1, "Both confirmations start day one");
+                Check(game.State == GameState.Playing && game.Days.CurrentDay == 1 && game.ActiveRole == CharacterRole.Worker,
+                    "One confirmation starts day one with the initially selected role");
                 Check(!selection.gameObject.activeSelf && Find<TrabajadorHUD>().gameObject.activeSelf, "Gameplay panels visible");
                 float clock = game.Days.TimeRemaining;
                 await Frames(5);
                 Check(game.Days.TimeRemaining < clock && Time.frameCount > 10, "Player loop and day clock advance");
                 int uiCount = canvas.GetComponentsInChildren<Transform>(true).Length;
-                Check(canvas.GetComponentsInChildren<TaskCard>(true).Length == 3, "Three task cards reused");
+                Check(Find<JefeHUD>().GetComponentsInChildren<TaskCard>(true).Length == 3, "Three task cards reused in the active role panel");
 
                 // Normal assignment, acceptance and successful simulator execution.
                 await Press(game.Input.boss.confirm);
@@ -235,9 +251,28 @@ namespace Caudal.Editor
                     game.Days.Tick(1000);
                     await Frames();
                     Check(game.State == GameState.DaySummary && Find<ResultsUI>().gameObject.activeSelf, "Day summary " + day);
-                    await Press(game.Input.worker.confirm);
                     if (day < game.Days.TotalDays)
-                        Check(game.State == GameState.Playing && game.Days.CurrentDay == day + 1, "Next day " + (day + 1));
+                    {
+                        bool chooseBoss = day % 2 == 1;
+                        if (day == 1)
+                        {
+                            var results = Find<ResultsUI>();
+                            var choice = (Button)typeof(ResultsUI).GetField(chooseBoss ? "bossButton" : "workerButton",
+                                BindingFlags.Instance | BindingFlags.NonPublic).GetValue(results);
+                            choice.onClick.Invoke();
+                            Check(game.NextDayBossSelected == chooseBoss, "Summary role button updates next-day selection");
+                        }
+                        else
+                        {
+                            await Press(game.Input.boss.left);
+                            Check(game.NextDayBossSelected == chooseBoss, "Summary arrow keys change next-day selection");
+                        }
+                        await Press(game.Input.boss.confirm);
+                        Check(game.State == GameState.Playing && game.Days.CurrentDay == day + 1 &&
+                            game.ActiveRole == (chooseBoss ? CharacterRole.Boss : CharacterRole.Worker), "Next day uses the selected role " + (day + 1));
+                    }
+                    else
+                        await Press(game.Input.boss.confirm);
                 }
                 Check(game.State == GameState.GameOver && Find<ResultsUI>().gameObject.activeSelf, "Final displayed");
                 await Press(game.Input.boss.confirm);

@@ -13,17 +13,22 @@ MonoBehaviour:
   m_Name: archivo
   m_EditorClassIdentifier: 
   taskId: archivo
-  taskName: Archivar documentos
-  description: Organiza los documentos de la oficina.
+  taskName: Fotocopiar documentos
+  owner: 0
+  affectedStat: 0
+  category: 0
+  description: "Imprime tres p\xE1ginas cuando el indicador est\xE9 en la zona correcta."
   difficulty: 1
   happinessCost: 3
   productivityReward: 4
   quotaReward: 12
   assignmentTimeLimit: 10
-  executionTimeLimit: 20
+  executionTimeLimit: 10
+  rejectionHappinessChange: 0
+  keepAfterFailure: 1
   requiresRefusalMinigame: 0
   taskArtwork: {fileID: 0}
-  minigameWindowBackground: {fileID: 21300000, guid: 54c2776f66ef742a2ac5172da3934685, type: 3}
+  minigameWindowBackground: {fileID: 21300000, guid: 22d5f541d592b9b40b4fad0bfd955589, type: 3}
   bossMinigamePrefab: {fileID: 0}
-  workerMinigamePrefab: {fileID: 0}
+  workerMinigamePrefab: {fileID: 8926056083149900497, guid: a79de742f5b73dd4281094c9aa0907c8, type: 3}
   minigamePrefab: {fileID: 0}

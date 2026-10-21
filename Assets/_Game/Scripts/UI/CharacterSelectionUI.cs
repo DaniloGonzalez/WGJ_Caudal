@@ -7,13 +7,27 @@ namespace Caudal
     {
         [SerializeField] CharacterCard workerCard, bossCard;
         [SerializeField] Text instructionsText;
+        [SerializeField] Text dayText;
+        GameManager game;
 
         public void Refresh(GameManager game)
         {
-            workerCard.Refresh(game.WorkerCharacter, game.Input.worker, game.WorkerReady, false, game.CharacterCount(false) > 1);
-            bossCard.Refresh(game.BossCharacter, game.Input.boss, game.BossReady, true, game.CharacterCount(true) > 1);
+            this.game = game;
+            workerCard.SetPointerOwner(this, false);
+            bossCard.SetPointerOwner(this, true);
+            workerCard.Refresh(game.WorkerCharacter, game.Input.boss, game.ActiveRole == CharacterRole.Worker, false, false);
+            bossCard.Refresh(game.BossCharacter, game.Input.boss, game.ActiveRole == CharacterRole.Boss, true, false);
             if (instructionsText != null)
-                instructionsText.text = "ELIGE CON LAS TECLAS DE CADA TARJETA · AMBOS CONFIRMAN PARA INICIAR";
+                instructionsText.gameObject.SetActive(false);
+            if (dayText != null)
+                dayText.text = $"DÍA:   {game.Days.CurrentDay + 1:00}";
+        }
+
+        public void SelectFromPointer(bool boss, bool confirm)
+        {
+            if (game == null) return;
+            game.SetSelectionRole(boss ? CharacterRole.Boss : CharacterRole.Worker);
+            if (confirm) game.ConfirmCharacter(boss);
         }
     }
 }

@@ -1,15 +1,15 @@
 using Caudal;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
-public class ScheduleMinigame : TimedMinigame
+public class ScheduleMinigame : TimedMinigame, IPointerClickHandler
 {
-    public override string ControlsHint => "↑/↓: mover · Enter: tomar y colocar";
+    public override string ControlsHint => "Haz clic en una tarjeta y luego en el espacio de su prioridad.";
     [SerializeField] private Image[] cards;
     [SerializeField] private Text[] cardLabels;
     [SerializeField] private Text[] slots;
     [SerializeField] private Sprite[] prioritySprites;
-    [SerializeField] private Sprite slotSprite;
     [SerializeField] private Text phaseText;
 
     private int[] priorities;
@@ -31,6 +31,7 @@ public class ScheduleMinigame : TimedMinigame
             if (prioritySprites != null && priorities[i] < prioritySprites.Length)
                 cards[i].sprite = prioritySprites[priorities[i]];
             cards[i].color = Color.white;
+            cards[i].raycastTarget = true;
         }
         for (int i = 0; i < slots.Length; i++)
         {
@@ -38,58 +39,61 @@ public class ScheduleMinigame : TimedMinigame
             var image = slots[i].transform.parent.GetComponent<Image>();
             if (image != null)
             {
-                image.sprite = slotSprite;
-                image.color = Color.white;
+                // Un fondo claro mantiene legible el texto negro de los espacios.
+                image.sprite = null;
+                image.color = new Color(.91f, .94f, .97f, 1f);
+                image.raycastTarget = true;
             }
         }
         selected = 0;
         ShowSelection();
     }
 
-    protected override void ReadInput()
+    public void OnPointerClick(PointerEventData eventData)
     {
-        int direction = PressedUp ? -1 : PressedDown ? 1 : 0;
-        if (direction != 0)
-        {
-            if (carriedCard < 0)
-                MoveToNextAvailableCard(direction);
-            else
-                selected = WrapIndex(selected + direction, slots.Length);
-        }
+        if (eventData.button != PointerEventData.InputButton.Left) return;
+        var target = eventData.pointerPressRaycast.gameObject != null ? eventData.pointerPressRaycast.gameObject.transform : eventData.pointerCurrentRaycast.gameObject?.transform;
+        if (target == null) return;
 
-        if (PressedConfirm)
+        if (carriedCard < 0)
         {
-            if (carriedCard < 0)
+            for (int i = 0; i < cards.Length; i++)
+                if (target == cards[i].transform || target.IsChildOf(cards[i].transform))
+                {
+                    if (!IsCardAvailable(i)) return;
+                    carriedCard = i;
+                    selected = 0;
+                    SetFeedback("Haz clic en el espacio de esa prioridad.");
+                    ShowSelection();
+                    return;
+                }
+        }
+        else
+        {
+            for (int i = 0; i < slots.Length; i++)
             {
-                if (!IsCardAvailable(selected)) selected = FindFirstAvailableCard();
-                if (selected < 0) return;
-                carriedCard = selected;
-                selected = 0;
-                SetFeedback("Elige el lugar según prioridad.");
-            }
-            else if (priorities[carriedCard] == selected)
-            {
-                slots[selected].text = "ESPACIO " + (selected + 1) + "\n" + PriorityName(priorities[carriedCard]);
+                var slotTransform = slots[i].transform.parent;
+                if (slotTransform == null || (target != slotTransform && !target.IsChildOf(slotTransform))) continue;
+                if (priorities[carriedCard] != i)
+                {
+                    AddError("Ese espacio no corresponde.");
+                    return;
+                }
+                slots[i].text = "ESPACIO " + (i + 1) + "\n" + PriorityName(priorities[carriedCard]);
                 cards[carriedCard].gameObject.SetActive(false);
                 bool allPlaced = true;
                 foreach (var card in cards) allPlaced &= !card.gameObject.activeSelf;
-                if (allPlaced)
-                {
-                    carriedCard = -1;
-                    selected = -1;
-                    Highlight(null);
-                    Finish(InteractionResult.Success);
-                    return;
-                }
-
                 carriedCard = -1;
-                selected = FindFirstAvailableCard();
-                SetFeedback("Prioridad correcta.");
+                if (allPlaced) Finish(InteractionResult.Success);
+                else
+                {
+                    selected = FindFirstAvailableCard();
+                    SetFeedback("Prioridad correcta.");
+                }
+                ShowSelection();
+                return;
             }
-            else
-                AddError("Ese espacio no corresponde.");
         }
-        ShowSelection();
     }
 
     private void ShowSelection()
@@ -127,26 +131,6 @@ public class ScheduleMinigame : TimedMinigame
         for (int i = 0; i < cards.Length; i++)
             if (IsCardAvailable(i)) return i;
         return -1;
-    }
-
-    private void MoveToNextAvailableCard(int direction)
-    {
-        if (cards.Length == 0) return;
-        int index = selected;
-        for (int i = 0; i < cards.Length; i++)
-        {
-            index = WrapIndex(index + direction, cards.Length);
-            if (IsCardAvailable(index))
-            {
-                selected = index;
-                return;
-            }
-        }
-    }
-
-    private static int WrapIndex(int index, int count)
-    {
-        return count > 0 ? (index % count + count) % count : 0;
     }
 
     private static string PriorityName(int priority) => priority == 0 ? "ALTA" : priority == 1 ? "MEDIA" : "BAJA";

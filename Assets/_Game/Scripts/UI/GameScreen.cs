@@ -12,6 +12,9 @@ namespace Caudal
         [SerializeField] StatsGraphUI graph;
         [SerializeField] CharacterSelectionUI selection;
         [SerializeField] ResultsUI results;
+        [SerializeField] StartScreenUI startScreen;
+        [SerializeField] GameObject taskWindows;
+        [SerializeField] TaskDecisionPanel taskDecisionPanel;
         GameManager game;
 
         public void Initialize(GameManager gameManager)
@@ -19,6 +22,8 @@ namespace Caudal
             if (game != null) game.OnDialogue -= HandleDialogue;
             game = gameManager;
             game.OnDialogue += HandleDialogue;
+            startScreen.Initialize(gameManager);
+            results.Initialize(gameManager);
             Refresh();
         }
 
@@ -39,14 +44,20 @@ namespace Caudal
         {
             if (game == null || game.Input == null) return;
             bool choosing = game.State == GameState.CharacterSelection;
+            bool showingStartScreen = game.State == GameState.StartScreen;
             bool showingResults = game.State == GameState.DaySummary || game.State == GameState.GameOver;
             bool showGame = game.State == GameState.Playing || showingResults;
+            if (taskWindows != null) taskWindows.SetActive(game.State == GameState.Playing);
+            if (game.State != GameState.Playing && taskDecisionPanel != null)
+                taskDecisionPanel.Hide();
             worker.gameObject.SetActive(showGame);
             boss.gameObject.SetActive(showGame);
-            shared.gameObject.SetActive(showGame);
-            graph.gameObject.SetActive(showGame);
+            shared.gameObject.SetActive(game.State == GameState.Playing);
+            graph.gameObject.SetActive(game.State == GameState.Playing);
             selection.gameObject.SetActive(choosing);
+            startScreen.gameObject.SetActive(showingStartScreen);
             results.gameObject.SetActive(showingResults);
+            if (showingStartScreen) startScreen.Refresh();
             if (choosing) selection.Refresh(game);
             if (showGame)
             {

@@ -1,10 +1,11 @@
 using Caudal;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
-public class CopierTimingMinigame : TimedMinigame
+public class CopierTimingMinigame : TimedMinigame, IPointerClickHandler
 {
-    public override string ControlsHint => "F: imprimir dentro del objetivo · G: salir";
+    public override string ControlsHint => "Haz clic en la barra cuando el indicador esté en la zona objetivo.";
     [SerializeField] private RectTransform track;
     [SerializeField] private RectTransform targetZone;
     [SerializeField] private RectTransform indicator;
@@ -29,6 +30,7 @@ public class CopierTimingMinigame : TimedMinigame
         var trackImage = track != null ? track.GetComponent<Image>() : null;
         var targetImage = targetZone != null ? targetZone.GetComponent<Image>() : null;
         var cursorImage = indicator != null ? indicator.GetComponent<Image>() : null;
+        if (trackImage != null) trackImage.raycastTarget = true;
         if (trackImage != null && timingTrackSprite != null) trackImage.sprite = timingTrackSprite;
         if (targetImage != null && timingTargetSprite != null) targetImage.sprite = timingTargetSprite;
         if (cursorImage != null && timingCursorSprite != null) cursorImage.sprite = timingCursorSprite;
@@ -49,9 +51,15 @@ public class CopierTimingMinigame : TimedMinigame
         UpdateIndicator();
     }
 
-    protected override void ReadInput()
+    public void OnPointerClick(PointerEventData eventData)
     {
-        if (!PressedConfirm) return;
+        if (eventData.button != PointerEventData.InputButton.Left) return;
+        if (track == null || !RectTransformUtility.RectangleContainsScreenPoint(track, eventData.position, eventData.pressEventCamera)) return;
+        TryPrintPage();
+    }
+
+    private void TryPrintPage()
+    {
         if (position >= .42f && position <= .62f)
         {
             printedPages++;

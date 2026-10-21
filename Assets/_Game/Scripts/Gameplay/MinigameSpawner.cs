@@ -9,7 +9,6 @@ public class MinigameSpawner : MonoBehaviour
 
     [Header("Prefabs")]
     [SerializeField] private GameObject popupBasePrefab;
-    [SerializeField] private GameObject fallbackMinigamePrefab;
 
     private readonly Dictionary<int, PopUpController> openPopups = new Dictionary<int, PopUpController>();
 
@@ -44,6 +43,7 @@ public class MinigameSpawner : MonoBehaviour
             return;
         }
         if (openPopups.ContainsKey(task.Id)) return;
+        GameObject prefabToSpawn = task.Data.GetMinigamePrefab(task.Owner);
         if (popupBasePrefab == null)
         {
             Debug.LogWarning("MinigameSpawner: falta asignar popupBasePrefab en el Inspector.");
@@ -56,10 +56,6 @@ public class MinigameSpawner : MonoBehaviour
             Debug.LogError("MinigameSpawner: No se encontro Game UI dónde abrir el minijuego");
             return;
         }
-
-        GameObject prefabToSpawn = task.Data.GetMinigamePrefab(kind);
-        if (prefabToSpawn == null)
-            prefabToSpawn = fallbackMinigamePrefab;
 
         GameObject popupInstance = Instantiate(popupBasePrefab, canvasObj.transform, false);
 

@@ -68,75 +68,42 @@ namespace Caudal.Editor
             {
                 Application.runInBackground = true;
                 var game = Object.FindAnyObjectByType<GameManager>();
-                double deadline = EditorApplication.timeSinceStartup + 10;
-                while (game == null || game.State != GameState.CharacterSelection)
+                Check(game != null, "GameManager presente en Main");
+                var canvas = Object.FindAnyObjectByType<Canvas>();
+                var spawner = Object.FindAnyObjectByType<MinigameSpawner>();
+                Check(canvas != null && spawner != null, "Canvas y MinigameSpawner presentes");
+                var popupPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Game/Prefabs/PopUp.prefab");
+                Check(popupPrefab != null, "PopUp.prefab presente");
+
+                foreach (CharacterRole role in new[] { CharacterRole.Boss, CharacterRole.Worker })
                 {
-                    if (EditorApplication.timeSinceStartup > deadline) throw new Exception("La selección no apareció tras la intro.");
+                    game.Restart();
+                    game.ConfirmCharacter(role == CharacterRole.Boss);
+                    Check(game.State == GameState.Playing && game.ActiveRole == role, "Una confirmación inicia la perspectiva " + role);
+                    Check(game.Tasks.StartOwnTask(0), "TaskManager inicia tarea de " + role);
                     await Frames();
-                    game = Object.FindAnyObjectByType<GameManager>();
+                    var task = game.Tasks.Active;
+                    var popup = Object.FindAnyObjectByType<PopUpController>();
+                    Check(task != null && popup != null && popup.gameObject.activeInHierarchy, "Spawner abre popup de " + role);
+                    var rect = (RectTransform)popup.transform;
+                    var texts = popup.GetComponentsInChildren<Text>(true).Select(t => t.text).ToArray();
+                    Check(texts.Contains(task.Data.taskName) && texts.Contains(task.Data.description), "Popup muestra título y descripción");
+                    Check(rect.anchorMin == Vector2.zero && rect.anchorMax == Vector2.one, "Popup cubre el Canvas");
+                    var window = popup.transform.Find("Window") as RectTransform;
+                    Check(window != null && window.anchorMin == new Vector2(.5f, .5f) &&
+                        window.anchorMax == new Vector2(.5f, .5f) && window.anchoredPosition == Vector2.zero,
+                        "Ventana de minijuego centrada en el popup");
+                    Check(popup.GetComponentsInChildren<Button>(true).Length == 1 && Object.FindAnyObjectByType<UnityEngine.EventSystems.EventSystem>() != null,
+                        "Popup conserva cancelar opcional y EventSystem");
+                    var minigame = popup.GetComponentInChildren<TimedMinigame>(true);
+                    Check(minigame != null && task.Data.GetMinigamePrefab(role) != null, "Popup carga minijuego propio de " + role);
+                    Check(minigame.gameObject.activeInHierarchy, "Minijuego queda activo dentro del popup");
+                    Finish(minigame, InteractionResult.Success);
+                    await Frames();
+                    Check(task.Status == Caudal.TaskStatus.Completed && Object.FindAnyObjectByType<PopUpController>() == null,
+                        "Resultado cierra popup y completa tarea de " + role);
+                    checks.Add("Popup y resultado funcional para " + role);
                 }
-
-                game.ConfirmCharacter(false);
-                game.ConfirmCharacter(true);
-                Check(game.State == GameState.Playing, "Ambos perfiles pueden iniciar una jornada para la prueba.");
-                checks.Add("Main inicia una jornada con ambos roles");
-
-                var task = game.Tasks.Tasks.First(t => t.Status == Caudal.TaskStatus.Available);
-                int taskIndex = -1;
-                for (int i = 0; i < game.Tasks.Tasks.Count; i++)
-                    if (game.Tasks.Tasks[i] == task) { taskIndex = i; break; }
-                Check(game.Tasks.Assign(taskIndex, TaskStrategy.Normal), "No se pudo iniciar la asignación de prueba.");
-                await Frames();
-                var popup = Object.FindAnyObjectByType<PopUpController>();
-                Check(popup != null && popup.gameObject.activeInHierarchy, "El spawner no abrió la ventana para el jefe.");
-                var bossRect = (RectTransform)popup.transform;
-                var bossTexts = popup.GetComponentsInChildren<Text>(true).Select(t => t.text).ToArray();
-                Check(bossRect.anchorMin.x == .5f && bossRect.anchorMax.x == 1 && bossTexts.Any(t => t.Contains("JEFE")),
-                    "La ventana de asignación no está en la mitad del jefe.");
-                checks.Add("La asignación abre una ventana del jefe en la mitad derecha");
-                Check(game.Tasks.Resolve(task.Id, task.Day, InteractionKind.Assignment, InteractionResult.Success), "No se pudo resolver la asignación de prueba.");
-                await Frames();
-                Check(Object.FindAnyObjectByType<PopUpController>() == null, "La ventana del jefe no se cerró al resolver la asignación.");
-                game.Tasks.Accept();
-                await Frames();
-
-                popup = Object.FindAnyObjectByType<PopUpController>();
-                Check(popup != null && popup.gameObject.activeInHierarchy, "El spawner no abrió la ventana al aceptar la tarea.");
-                checks.Add("La ejecución abre una ventana del trabajador al aceptar la tarea");
-                var workerRect = (RectTransform)popup.transform;
-                Check(workerRect.anchorMin.x == 0 && workerRect.anchorMax.x == .5f, "La ventana de ejecución no está en la mitad del trabajador.");
-                var texts = popup.GetComponentsInChildren<Text>(true).Select(t => t.text).ToArray();
-                Check(texts.Contains(task.Data.taskName) && texts.Contains(task.Data.description), "La ventana no muestra nombre y descripción.");
-                checks.Add("La ventana presenta título y descripción de TaskData");
-                bool hasMinigame = task.Data.GetMinigamePrefab(InteractionKind.Execution) != null;
-                Check(texts.Any(t => t.Contains("TRABAJADOR: WASD")) &&
-                    (hasMinigame ? popup.GetComponentInChildren<TimedMinigame>(true) != null : texts.Any(t => t.Contains("MINIJUEGO EN PREPARACIÓN"))),
-                    "La ventana no presenta controles o contenido.");
-                checks.Add("La ventana muestra rol, controles y área de minijuego");
-                Check(popup.GetComponentsInChildren<Button>(true).Length == 1 && Object.FindAnyObjectByType<UnityEngine.EventSystems.EventSystem>() != null,
-                    "El botón de cancelar o EventSystem no está disponible.");
-                checks.Add("Cancelar dispone de botón opcional y EventSystem");
-
-                popup.GetComponentsInChildren<Button>(true).Single().onClick.Invoke();
-                await Frames();
-                Check(task.Status == Caudal.TaskStatus.Failed && Object.FindAnyObjectByType<PopUpController>() == null,
-                    "Cancelar no resolvió una sola vez y cerró la ventana.");
-                checks.Add("Cancelar resuelve una vez y cierra la ventana");
-
-                var second = game.Tasks.Tasks.First(t => t.Status == Caudal.TaskStatus.Available);
-                taskIndex = -1;
-                for (int i = 0; i < game.Tasks.Tasks.Count; i++)
-                    if (game.Tasks.Tasks[i] == second) { taskIndex = i; break; }
-                game.Tasks.Assign(taskIndex, TaskStrategy.Normal);
-                game.Tasks.Resolve(second.Id, second.Day, InteractionKind.Assignment, InteractionResult.Success);
-                game.Tasks.Accept();
-                await Frames();
-                Check(Object.FindAnyObjectByType<PopUpController>() != null, "No abrió la segunda ventana de prueba.");
-                game.Tasks.EndDay();
-                await Frames();
-                Check(second.Status == Caudal.TaskStatus.Expired && Object.FindAnyObjectByType<PopUpController>() == null,
-                    "La ventana no se cerró al expirar la tarea.");
-                checks.Add("La ventana se limpia al expirar la tarea");
 
                 string report = "CAUDAL_MINIGAME_POPUP_PASSED (" + Screen.width + "x" + Screen.height + "):\n" + string.Join("\n", checks);
                 SessionState.SetString(ResultKey, report);
@@ -152,6 +119,12 @@ namespace Caudal.Editor
                 Application.runInBackground = background;
                 EditorApplication.isPlaying = false;
             }
+        }
+
+        static void Finish(TimedMinigame minigame, InteractionResult result)
+        {
+            typeof(TimedMinigame).GetMethod("Finish", BindingFlags.Instance | BindingFlags.NonPublic)
+                .Invoke(minigame, new object[] { result });
         }
     }
 }

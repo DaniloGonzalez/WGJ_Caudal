@@ -5,7 +5,6 @@ using UnityEngine.UI;
 
 public abstract class TimedMinigame : MonoBehaviour, IMinigame
 {
-    [SerializeField] private bool bossControls;
     [SerializeField, Min(.1f)] private float duration = 10;
     [SerializeField, Min(1)] private int difficulty = 1;
     [SerializeField, Min(1)] private int errorLimit = 3;
@@ -16,22 +15,25 @@ public abstract class TimedMinigame : MonoBehaviour, IMinigame
     [SerializeField] private Image timerFill;
     [SerializeField] private Image selectionOutline;
 
-    private InputRouter input;
     private float remaining;
     private int errors;
     private int startFrame;
     private bool finished;
 
     public event Action<InteractionResult> OnFinished;
-    public virtual string ControlsHint => "Usa los controles de la pantalla · G: salir";
+    public virtual string ControlsHint => "Haz clic en los elementos para completar la tarea.";
     protected int ErrorCount => errors;
     protected int ErrorLimit => errorLimit;
     protected float Remaining => remaining;
     protected Text FeedbackLabel => feedbackText;
 
+    public void SetWaveDifficulty(int level)
+    {
+        difficulty = Mathf.Clamp(level, 1, 3);
+    }
+
     protected virtual void OnEnable()
     {
-        input = FindAnyObjectByType<InputRouter>();
         if (selectionOutline == null)
         {
             var outlineTransform = transform.Find("SelectionOutline");
@@ -44,6 +46,8 @@ public abstract class TimedMinigame : MonoBehaviour, IMinigame
         errors = 0;
         finished = false;
         startFrame = Time.frameCount;
+        foreach (var label in GetComponentsInChildren<Text>(true))
+            label.color = Color.black;
         SetFeedback("");
         OnMinigameStarted();
         UpdateHud();
@@ -64,32 +68,11 @@ public abstract class TimedMinigame : MonoBehaviour, IMinigame
             return;
         }
 
-        if (input == null)
-            input = FindAnyObjectByType<InputRouter>();
-        if (input != null)
-        {
-            if (PressedCancel)
-            {
-                Finish(InteractionResult.Cancelled);
-                return;
-            }
-            ReadInput();
-        }
+        // Las mecánicas reciben sus acciones desde eventos de clic de la UI.
     }
 
     protected virtual void OnMinigameStarted() { }
     protected virtual void AdvanceGame(float deltaTime) { }
-    protected abstract void ReadInput();
-
-    protected bool PressedConfirm => Pressed(Keys.confirm);
-    protected bool PressedUp => Pressed(Keys.up);
-    protected bool PressedDown => Pressed(Keys.down);
-    protected bool PressedLeft => Pressed(Keys.left);
-    protected bool PressedRight => Pressed(Keys.right);
-    private bool PressedCancel => Pressed(Keys.cancel);
-
-    private RoleKeys Keys => bossControls ? input.boss : input.worker;
-    private bool Pressed(UnityEngine.InputSystem.Key key) => input != null && input.Pressed(key);
 
     protected void AddError(string message)
     {
