@@ -28,7 +28,7 @@ MonoBehaviour:
   rejectionHappinessChange: 0
   keepAfterFailure: 1
   requiresRefusalMinigame: 0
-  taskArtwork: {fileID: 0}
+  taskArtwork: {fileID: -5318853237758987035, guid: 3209c5eff47bf456fbef13b0a8f4f158, type: 3}
   minigameWindowBackground: {fileID: 21300000, guid: 5f12821f125638b469a3d4cee52d996d, type: 3}
   bossMinigamePrefab: {fileID: 6214473207928996683, guid: 44685ac09c82bd54a92a91e1587f855d, type: 3}
   workerMinigamePrefab: {fileID: 0}
