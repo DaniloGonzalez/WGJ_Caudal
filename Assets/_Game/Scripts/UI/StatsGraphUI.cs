@@ -17,14 +17,16 @@ namespace Caudal
 
         public void Refresh(GameManager game)
         {
-            UpdateMeter(happinessMeter, happinessValue, game.Stats.Happiness, happinessColor);
-            UpdateMeter(productivityMeter, productivityValue, game.Stats.Productivity, productivityColor);
+            happinessValue.color = Color.white;
+            productivityValue.color = Color.white;
+            UpdateMeter(happinessMeter, happinessValue, game.Stats.Happiness, happinessColor, false);
+            UpdateMeter(productivityMeter, productivityValue, game.Stats.Productivity, productivityColor, true);
         }
 
-        void UpdateMeter(Image meter, Text valueText, float value, Color color)
+        void UpdateMeter(Image meter, Text valueText, float value, Color color, bool tintByValue)
         {
             float clampedValue = Mathf.Clamp(value, 0f, 100f);
-            meter.color = Color.Lerp(Color.white, color, clampedValue / 100f);
+            meter.color = tintByValue ? Color.Lerp(Color.white, color, clampedValue / 100f) : color;
             meter.fillAmount = 1f;
             valueText.text = Mathf.RoundToInt(clampedValue).ToString();
         }

@@ -127,6 +127,8 @@ namespace Caudal
             workerImage.sprite = hasNextDay && !game.NextDayBossSelected ? workerSelectedSprite : workerIdleSprite;
 
             SetFinalLayout(isFinal);
+            detailText.gameObject.SetActive(isFinal);
+            controls.gameObject.SetActive(false);
             if (isFinal)
             {
                 dayText.color = completedCaption.color = completedText.color = detailText.color = promptText.color = finalTextColor;
@@ -152,8 +154,10 @@ namespace Caudal
                 ? game.Days.AverageHappiness : game.Stats.Happiness;
             float productivity = isFinal && game.Days.RecordedClosingDays >= game.Days.TotalDays
                 ? game.Days.AverageProductivity : game.Stats.Productivity;
-            UpdateMeter(happinessMeter, happinessValue, happiness, happinessColor);
-            UpdateMeter(productivityMeter, productivityValue, productivity, productivityColor);
+            happinessValue.color = Color.white;
+            productivityValue.color = Color.white;
+            UpdateMeter(happinessMeter, happinessValue, happiness, happinessColor, false);
+            UpdateMeter(productivityMeter, productivityValue, productivity, productivityColor, true);
         }
 
         Sprite GetEndingSprite(string title)
@@ -211,10 +215,10 @@ namespace Caudal
             }
         }
 
-        void UpdateMeter(Image meter, Text valueText, float value, Color color)
+        void UpdateMeter(Image meter, Text valueText, float value, Color color, bool tintByValue)
         {
             float clampedValue = Mathf.Clamp(value, 0f, 100f);
-            meter.color = Color.Lerp(Color.white, color, clampedValue / 100f);
+            meter.color = tintByValue ? Color.Lerp(Color.white, color, clampedValue / 100f) : color;
             meter.fillAmount = 1f;
             valueText.text = Mathf.RoundToInt(clampedValue).ToString();
         }
