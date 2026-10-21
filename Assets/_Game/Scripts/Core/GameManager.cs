@@ -287,22 +287,30 @@ namespace Caudal
             if (happiness >= endingThreshold && productivity >= endingThreshold)
             {
                 title = "Best Place to Work";
-                body = "Encontraron espacio para producir y cuidar a las personas.";
+                body = "Estado: Excelente productividad — Excelente bienestar\n" +
+                    "La empresa prospera y el equipo está feliz.\n\n" +
+                    "¡EL MEJOR EQUIPO! Alcanzaste el nirvana. Tu empresa ha ganado el premio a “Best place to work” ¡Y TU PRODUCTIVIDAD ESTÁ POR LAS NUBES! ¡BONOS DE PRODUCTIVIDAD PARA TODOS! Gracias por lograr el sueño: una empresa exitosa sin hacernos absolutamente miserables a todos.";
             }
             else if (happiness < endingThreshold && productivity >= endingThreshold)
             {
                 title = "Éxito miserable";
-                body = "Las metas se cumplieron, pero el bienestar quedó atrás.";
+                body = "Estado: Excelente productividad — Mal bienestar\n" +
+                    "Los resultados son excelentes, pero las personas pagan el precio.\n\n" +
+                    "No has hecho nada que millones de humanos están haciendo actualmente, poniendo los resultados por sobre las personas. Veamos cuánto te dura igual. Al menos puedes sentirte parte de una comunidad. Una comunidad miserable, pero una comunidad al fin y al cabo.";
             }
             else if (happiness >= endingThreshold && productivity < endingThreshold)
             {
                 title = "Oficina feliz en crisis";
-                body = "El bienestar no alcanzó para sostener la producción.";
+                body = "Estado: Mala productividad — Excelente bienestar\n" +
+                    "El equipo está feliz, pero la empresa no consigue sostener sus resultados.\n\n" +
+                    "Mira, peor es nada. Quizá mañana alguno del equipo no tenga trabajo ¿y cómo va alimentar a sus diez gatitos?. No se puede con pura salud mental. Pero de todas formas ¡¿quién tiene diez gatitos en esta economía?! Eso definitivamente NO es tu responsabilidad.";
             }
             else
             {
                 title = "Colapso de oficina";
-                body = "La oficina terminó sin energía y sin resultados.";
+                body = "Estado: Mala productividad — Mal bienestar\n" +
+                    "Ni los resultados ni el ambiente laboral lograron sostenerse.\n\n" +
+                    "¿Y hacer deporte no te gusta? No sé, quizá elige otro juego, otro hobbie, otra carrera, otra vida. Igual imagino que te esforzaste por hacernos miserables de todas las maneras posibles y supongo eso cuenta como algo.";
             }
             ResultText = $"{title}\n\n{body}\n\nValores finales del viernes:\nBienestar: {happiness:0}\nProductividad: {productivity:0}\n\nClic para reiniciar";
             State = GameState.GameOver;

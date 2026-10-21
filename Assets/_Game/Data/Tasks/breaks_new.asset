@@ -17,7 +17,8 @@ MonoBehaviour:
   owner: 1
   affectedStat: 0
   category: 0
-  description: Distribuye al equipo en sus horarios de descanso sin superar la capacidad.
+  description: "El equipo necesita descansar, pero no podemos dejar la oficina vac\xEDa."
+  instruction: Distribuye a los trabajadores entre los horarios disponibles sin superar su capacidad.
   difficulty: 1
   happinessCost: 5
   productivityReward: 5

@@ -24,6 +24,7 @@ namespace Caudal
         Quaternion baseRotation;
         Vector2 basePosition;
         GameManager game;
+        TaskInstance boundTask;
         int taskIndex = -1;
         float floatSeed;
         void Awake()
@@ -115,18 +116,21 @@ namespace Caudal
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            if (game != null) game.SelectTask(taskIndex);
+            if (game != null && boundTask != null && !boundTask.IsFinal)
+                game.SelectTask(taskIndex);
         }
 
         public void OnPointerClick(PointerEventData eventData)
         {
-            if (game == null || eventData.button != PointerEventData.InputButton.Left) return;
+            if (game == null || boundTask == null || boundTask.IsFinal ||
+                eventData.button != PointerEventData.InputButton.Left) return;
             game.SelectTask(taskIndex);
             if (decisionPanel != null) decisionPanel.Show(game, taskIndex);
         }
 
         public void Refresh(TaskInstance task, bool selected, bool urgent)
         {
+            boundTask = task;
             this.urgent = urgent;
             nameLabel.text = GetDisplayName(task.Data.taskName);
             if (statusLabel != null)

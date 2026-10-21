@@ -17,7 +17,8 @@ MonoBehaviour:
   owner: 0
   affectedStat: 0
   category: 0
-  description: Elimina el spam sin borrar los mensajes importantes.
+  description: "\xA1Me estoy quedando sin espacio!"
+  instruction: Elimina todo el spam sin borrar correos importantes.
   difficulty: 1
   happinessCost: 4
   productivityReward: 5

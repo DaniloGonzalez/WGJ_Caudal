@@ -17,7 +17,8 @@ MonoBehaviour:
   owner: 1
   affectedStat: 1
   category: 0
-  description: "Ordena los documentos para la reuni\xF3n de la oficina."
+  description: Asignar las tareas a la persona correcta es una habilidad fundamental de una jefatura. Aprende a conocer a tu equipo.
+  instruction: "Selecciona una tarea y col\xF3cala en la bandeja del trabajador correcto, representada por colores."
   difficulty: 1
   happinessCost: 5
   productivityReward: 6

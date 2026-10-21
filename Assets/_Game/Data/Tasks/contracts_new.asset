@@ -17,7 +17,8 @@ MonoBehaviour:
   owner: 1
   affectedStat: 1
   category: 0
-  description: "Coloca el sello dentro de la zona v\xE1lida de cada contrato."
+  description: "Hay una monta\xF1a de contratos esperando tu aprobaci\xF3n. Nada dice liderazgo como un buen sello de oficina."
+  instruction: Coloca el sello dentro de la zona indicada en cada contrato.
   difficulty: 1
   happinessCost: 5
   productivityReward: 5

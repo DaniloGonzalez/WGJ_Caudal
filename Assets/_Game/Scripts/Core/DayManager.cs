@@ -4,7 +4,7 @@ namespace Caudal
     public sealed class DayManager : MonoBehaviour
     {
         [SerializeField, Min(1)] int totalDays = 5;
-        [SerializeField, Min(1)] float dayDuration = 45, quotaTarget = 60;
+        [SerializeField, Min(1)] float dayDuration = 30, quotaTarget = 60;
         float closingHappinessTotal, closingProductivityTotal;
         int recordedClosingDays, lastRecordedDay;
         public int CurrentDay { get; private set; }

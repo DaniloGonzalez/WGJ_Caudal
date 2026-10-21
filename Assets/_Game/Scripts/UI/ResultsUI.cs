@@ -185,24 +185,24 @@ namespace Caudal
         void SetFinalLayout(bool isFinal)
         {
             if (detailRect == null || promptRect == null) return;
-            detailRect.anchorMin = isFinal ? new Vector2(.07f, .37f) : detailAnchorMin;
-            detailRect.anchorMax = isFinal ? new Vector2(.37f, .65f) : detailAnchorMax;
-            promptRect.anchorMin = isFinal ? new Vector2(.07f, .27f) : promptAnchorMin;
-            promptRect.anchorMax = isFinal ? new Vector2(.38f, .35f) : promptAnchorMax;
-            dayText.rectTransform.anchorMin = isFinal ? new Vector2(.07f, .70f) : new Vector2(.07f, .60f);
-            dayText.rectTransform.anchorMax = isFinal ? new Vector2(.38f, .88f) : new Vector2(.48f, .80f);
+            detailRect.anchorMin = isFinal ? new Vector2(.06f, .27f) : detailAnchorMin;
+            detailRect.anchorMax = isFinal ? new Vector2(.47f, .69f) : detailAnchorMax;
+            promptRect.anchorMin = isFinal ? new Vector2(.06f, .19f) : promptAnchorMin;
+            promptRect.anchorMax = isFinal ? new Vector2(.47f, .25f) : promptAnchorMax;
+            dayText.rectTransform.anchorMin = isFinal ? new Vector2(.06f, .71f) : new Vector2(.07f, .60f);
+            dayText.rectTransform.anchorMax = isFinal ? new Vector2(.47f, .89f) : new Vector2(.48f, .80f);
             dayText.horizontalOverflow = isFinal ? HorizontalWrapMode.Wrap : HorizontalWrapMode.Overflow;
             detailText.horizontalOverflow = isFinal ? HorizontalWrapMode.Wrap : HorizontalWrapMode.Overflow;
             promptText.horizontalOverflow = isFinal ? HorizontalWrapMode.Wrap : HorizontalWrapMode.Overflow;
-            detailText.fontSize = isFinal ? 20 : detailFontSize;
+            detailText.fontSize = isFinal ? 17 : detailFontSize;
             dayText.fontSize = isFinal ? 34 : 76;
             completedBackground.gameObject.SetActive(!isFinal);
             finalInfoBackground.gameObject.SetActive(isFinal);
             selectionBackground.gameObject.SetActive(!isFinal);
             if (isFinal)
             {
-                infoBackgroundRect.anchorMin = new Vector2(.04f, .24f);
-                infoBackgroundRect.anchorMax = new Vector2(.40f, .91f);
+                infoBackgroundRect.anchorMin = new Vector2(.04f, .16f);
+                infoBackgroundRect.anchorMax = new Vector2(.49f, .92f);
                 infoBackgroundRect.SetSiblingIndex(1);
                 finalInfoBackground.color = finalPanelColor;
             }

@@ -14,7 +14,7 @@ La validación `SixMinigamesValidation` comprueba éxito en fácil, media y dif�
 
 ## Reglas activas
 
-- Cada jornada dura 45 segundos (`DayManager.dayDuration`, configurado en `Main`).
+- Cada jornada dura 30 segundos (`DayManager.dayDuration`, configurado en `Main`).
 - Una oleada dura 15 segundos (`TaskManager.waveDuration`) y contiene tres tareas simultáneas, una por cada minijuego distinto del personaje elegido ese día.
 - Si las tres tareas quedan resueltas antes del plazo, la siguiente oleada comienza después de la transición visual. Si vence el plazo, cada tarea disponible se registra como vencida y recibe una penalización una sola vez.
 - Si el reloj global llega a cero, no se inicia otra oleada. Las tareas que no están en un minijuego activo se vencen; un minijuego activo puede terminar y cerrar la jornada después de entregar su resultado.
@@ -48,7 +48,7 @@ La validación `SixMinigamesValidation` comprueba éxito en fácil, media y dif�
 - Se inspeccionaron en Play ambos roles, la transición de oleada y el cierre diario después de terminar un minijuego activo. Se comprobó el popup de dificultad 3 para cada rol.
 - Unity confirmó que `Main` quedó guardada y el Editor fuera de Play.
 
-La prueba integrada de seis minijuegos se ejecutó con Game View de 1470 × 827. Las capturas visuales de roles y jornada a 1920 × 1080 se hicieron en pruebas de Play separadas. No se simuló durante esta validación una jornada manual completa de 45 segundos con mouse físico.
+La prueba integrada de seis minijuegos se ejecutó con Game View de 1470 × 827. Las capturas visuales de roles y jornada a 1920 × 1080 se hicieron en pruebas de Play separadas. No se simuló durante esta validación una jornada manual completa de 30 segundos con mouse físico.
 
 ## Validaciones antiguas
 

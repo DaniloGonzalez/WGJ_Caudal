@@ -17,7 +17,8 @@ MonoBehaviour:
   owner: 1
   affectedStat: 0
   category: 0
-  description: "Revisa cinco solicitudes y decide cu\xE1les aprobar."
+  description: "Lee la solicitud del d\xEDa y decide c\xF3mo responder."
+  instruction: "Lee la situaci\xF3n y elige una de las dos respuestas disponibles."
   difficulty: 1
   happinessCost: 7
   productivityReward: 8

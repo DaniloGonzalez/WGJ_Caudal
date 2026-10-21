@@ -17,7 +17,8 @@ MonoBehaviour:
   owner: 0
   affectedStat: 0
   category: 0
-  description: "Imprime tres p\xE1ginas cuando el indicador est\xE9 en la zona correcta."
+  description: "Esta fotocopiadora tiene una ma\xF1a."
+  instruction: "Da un peque\xF1o golpe en el momento justo para hacerla imprimir."
   difficulty: 1
   happinessCost: 3
   productivityReward: 4
